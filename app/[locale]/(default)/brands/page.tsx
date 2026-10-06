@@ -3,7 +3,8 @@ import { setRequestLocale } from 'next-intl/server';
 
 import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { getSessionCustomerAccessToken } from '~/auth';
-import { getMakeswiftPageMetadata, getPageSnapshot, Page as MakeswiftPage } from '~/lib/makeswift';
+import { getMakeswiftPageMetadata, Page as MakeswiftPage } from '~/lib/makeswift';
+import { getPageSnapshot } from '~/lib/makeswift/client';
 import { getMetadataAlternates } from '~/lib/seo/canonical';
 
 import { BrandsDirectoryClient } from './_components/brands-directory-client';

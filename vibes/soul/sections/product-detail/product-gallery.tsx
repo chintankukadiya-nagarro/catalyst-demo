@@ -232,12 +232,37 @@ export function ProductGallery({
     };
   }, [emblaThumbsApi, addThumbsScrollListener, onSlideChanges]);
 
+  const [zoomState, setZoomState] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+  }>({ show: false, x: 0, y: 0 });
+
+  const activeImage = images[selectedIndex];
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+
+    setZoomState({ show: true, x, y });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setZoomState((prev) => ({ ...prev, show: false }));
+  }, []);
+
   return (
-    <div className={clsx('sticky top-4 flex flex-col gap-2', className)}>
+    <div className={clsx('relative sticky top-4 flex flex-col gap-2', className)}>
       <div aria-live="polite" className="sr-only" role="status">
         {loadingStatus}
       </div>
-      <div className="w-full overflow-hidden rounded-xl @xl:rounded-2xl" ref={emblaRef}>
+      <div
+        className="group/zoom relative w-full cursor-crosshair overflow-hidden rounded-xl @xl:rounded-2xl"
+        onMouseLeave={handleMouseLeave}
+        onMouseMove={handleMouseMove}
+        ref={emblaRef}
+      >
         <div className="flex">
           {images.map((image, idx) => (
             <div
@@ -262,7 +287,7 @@ export function ProductGallery({
               <Image
                 alt={image.alt}
                 className={clsx(
-                  'bg-[var(--product-gallery-image-background,hsl(var(--contrast-100)))]',
+                  'bg-[var(--product-gallery-image-background,hsl(var(--contrast-100)))] pointer-events-none',
                   {
                     contain: 'object-contain',
                     cover: 'object-cover',
@@ -276,7 +301,35 @@ export function ProductGallery({
             </div>
           ))}
         </div>
+
+        {/* Hover Zoom Lens Indicator on the image */}
+        {zoomState.show && (
+          <div
+            className="pointer-events-none absolute hidden h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-md border border-gray-400 bg-white/30 backdrop-contrast-125 shadow-sm @2xl:block"
+            style={{
+              left: `${zoomState.x}%`,
+              top: `${zoomState.y}%`,
+            }}
+          />
+        )}
       </div>
+
+      {/* Side Zoom Window (Similar to ELLE SHOP) */}
+      {zoomState.show && activeImage && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-[calc(100%+1.5rem)] top-0 z-[100] hidden h-[540px] w-[540px] overflow-hidden border border-gray-300 bg-white shadow-2xl @2xl:block"
+        >
+          <div
+            className="h-full w-full bg-white bg-no-repeat"
+            style={{
+              backgroundImage: `url(${activeImage.src.replace('{:size}', '1280w')})`,
+              backgroundPosition: `${zoomState.x}% ${zoomState.y}%`,
+              backgroundSize: '250%',
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex max-w-full shrink-0 flex-col gap-2">
         <div className="overflow-hidden" ref={emblaThumbsRef}>
