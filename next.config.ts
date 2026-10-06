@@ -63,8 +63,14 @@ export default async (): Promise<NextConfig> => {
       optimizePackageImports: ['@icons-pack/react-simple-icons'],
     },
     images: {
-      // Allow product-video poster thumbnails (YouTube) through next/image.
-      remotePatterns: [{ protocol: 'https', hostname: 'i.ytimg.com', pathname: '/vi/**' }],
+      remotePatterns: [
+        { protocol: 'https', hostname: 'i.ytimg.com', pathname: '/vi/**' },
+        { protocol: 'https', hostname: 'images.unsplash.com' },
+        { protocol: 'https', hostname: '**.bigcommerce.com' },
+        { protocol: 'https', hostname: '**.makeswift.com' },
+        { protocol: 'https', hostname: '**.amazonaws.com' },
+        { protocol: 'https', hostname: '**.cloudfront.net' },
+      ],
     },
     typescript: {
       ignoreBuildErrors: !!process.env.CI,
