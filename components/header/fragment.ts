@@ -32,12 +32,15 @@ export const HeaderFragment = graphql(`
 export const HeaderLinksFragment = graphql(`
   fragment HeaderLinksFragment on Site {
     categoryTree {
+      entityId
       name
       path
       children {
+        entityId
         name
         path
         children {
+          entityId
           name
           path
         }
