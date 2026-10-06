@@ -25,6 +25,8 @@ import { ProductAnalyticsProvider } from './_components/product-analytics-provid
 import { ProductSchema } from './_components/product-schema';
 import { ProductViewed } from './_components/product-viewed';
 import { Reviews } from './_components/reviews';
+import { SizeGuideModal } from './_components/size-guide-modal';
+import { getSizeGuideContent } from './_components/size-guide-modal/get-size-guide';
 import { WishlistButton } from './_components/wishlist-button';
 import { WishlistButtonForm } from './_components/wishlist-button/form';
 import {
@@ -97,9 +99,10 @@ export default async function Product({ params, searchParams }: Props) {
 
   const productId = Number(slug);
 
-  const [{ product: baseProduct, settings }, recaptchaSiteKey] = await Promise.all([
+  const [{ product: baseProduct, settings }, recaptchaSiteKey, sizeGuideContent] = await Promise.all([
     getProduct(productId, customerAccessToken),
     getRecaptchaSiteKey(),
+    getSizeGuideContent(customerAccessToken),
   ]);
 
   const reviewsEnabled = Boolean(settings?.reviews.enabled && !settings.display.showProductRating);
@@ -585,7 +588,10 @@ export default async function Product({ params, searchParams }: Props) {
           ctaLabel={streameableCtaLabel}
           decrementLabel={t('ProductDetails.decreaseQuantity')}
           emptySelectPlaceholder={t('ProductDetails.emptySelectPlaceholder')}
-          fields={productOptionsTransformer(baseProduct.productOptions)}
+          fields={productOptionsTransformer(
+            baseProduct.productOptions,
+            sizeGuideContent ? <SizeGuideModal content={sizeGuideContent} /> : undefined,
+          )}
           incrementLabel={t('ProductDetails.increaseQuantity')}
           loadMoreImagesAction={getMoreProductImages}
           prefetch={true}

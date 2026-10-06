@@ -1,4 +1,4 @@
-import { DM_Serif_Text, Inter, Roboto_Mono } from 'next/font/google';
+import { DM_Serif_Text, Inter, Jost, Roboto_Mono } from 'next/font/google';
 
 export const inter = Inter({
   display: 'swap',
@@ -19,4 +19,12 @@ export const robotoMono = Roboto_Mono({
   variable: '--font-family-roboto-mono',
 });
 
-export const fonts = [inter, dmSerifText, robotoMono];
+// ELLE SHOP (elleshop.jp) uses Jost for headings/UI labels.
+export const jost = Jost({
+  display: 'swap',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-family-jost',
+});
+
+export const fonts = [inter, dmSerifText, robotoMono, jost];

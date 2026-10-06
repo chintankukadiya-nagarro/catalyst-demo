@@ -3,6 +3,7 @@ import { z } from 'zod';
 interface FormField {
   name: string;
   label: string;
+  extraLabel?: React.ReactNode;
   errors?: string[];
   required?: boolean;
   persist?: boolean;

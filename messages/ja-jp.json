@@ -515,7 +515,6 @@
             "increaseQuantity": "数量を増やす",
             "decreaseQuantity": "数量を減らす",
             "emptySelectPlaceholder": "オプション選択",
-            "sizeGuide": "サイズガイド",
             "successMessage": "{cartItems, plural, =1 {1個の商品} other {#個の商品}}が<cartLink>カート</cartLink>に追加されました",
             "missingCart": "カートが見つかりません。しばらくしてからもう一度お試しください！",
             "unknownError": "不明なエラーです。しばらくしてから再度お試しください。",
