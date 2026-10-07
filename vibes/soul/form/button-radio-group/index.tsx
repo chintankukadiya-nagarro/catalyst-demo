@@ -41,6 +41,7 @@ export const ButtonRadioGroup = React.forwardRef<
   React.ComponentRef<typeof RadioGroupPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root> & {
     label?: string;
+    extraLabel?: React.ReactNode;
     options: Option[];
     errors?: string[];
     onOptionMouseEnter?: (value: string) => void;
@@ -50,6 +51,7 @@ export const ButtonRadioGroup = React.forwardRef<
   (
     {
       label,
+      extraLabel,
       options,
       errors,
       className,
@@ -64,10 +66,15 @@ export const ButtonRadioGroup = React.forwardRef<
 
     return (
       <div className={clsx('button-radio-group space-y-2', className)}>
-        {label !== undefined && label !== '' && (
-          <Label colorScheme={colorScheme} id={id} required={required}>
-            {label}
-          </Label>
+        {((label !== undefined && label !== '') || extraLabel != null) && (
+          <div className="flex items-center justify-between gap-2">
+            {label !== undefined && label !== '' && (
+              <Label colorScheme={colorScheme} id={id} required={required}>
+                {label}
+              </Label>
+            )}
+            {extraLabel}
+          </div>
         )}
         <RadioGroupPrimitive.Root
           {...rest}

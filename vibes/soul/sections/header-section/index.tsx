@@ -42,6 +42,10 @@ export const HeaderSection = forwardRef<React.ComponentRef<'div'>, Props>(
           onUnfix={() => setIsFloating(false)}
           onUnpin={() => setIsFloating(true)}
           pinStart={bannerHeight}
+          // react-headroom hard-codes `z-index: 1` on its inner wrapper, which creates a
+          // stacking context that traps the nav dropdown (`z-50`) beneath page content such
+          // as the product gallery (`relative z-30`). Raise the wrapper above page content.
+          style={{ zIndex: 40 }}
         >
           <div className={isEditorial ? '' : 'p-2'}>
             <Navigation {...navigation} isFloating={isFloating} />
