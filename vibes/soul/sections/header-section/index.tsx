@@ -16,6 +16,7 @@ export const HeaderSection = forwardRef<React.ComponentRef<'div'>, Props>(
     const [bannerElement, setBannerElement] = useState<HTMLElement | null>(null);
     const [bannerHeight, setBannerHeight] = useState(0);
     const [isFloating, setIsFloating] = useState(false);
+    const isEditorial = navigation.layoutVariant === 'editorial';
 
     useEffect(() => {
       if (!bannerElement) return;
@@ -46,7 +47,7 @@ export const HeaderSection = forwardRef<React.ComponentRef<'div'>, Props>(
           // as the product gallery (`relative z-30`). Raise the wrapper above page content.
           style={{ zIndex: 40 }}
         >
-          <div className="p-2">
+          <div className={isEditorial ? '' : 'p-2'}>
             <Navigation {...navigation} isFloating={isFloating} />
           </div>
         </Headroom>

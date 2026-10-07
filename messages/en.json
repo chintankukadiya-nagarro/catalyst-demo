@@ -633,6 +633,20 @@
     "Header": {
       "home": "Home",
       "toggleNavigation": "Toggle navigation",
+      "SecondaryNav": {
+        "new-arrivals": "New Arrivals",
+        "brands": "Brand",
+        "category": "Category",
+        "features": "Special Feature",
+        "blog": "ELLE"
+      },
+      "MenuOverlay": {
+        "close": "Close menu",
+        "items": "Items",
+        "category": "Category",
+        "contents": "Contents",
+        "stayInTheLoop": "Stay in the Loop"
+      },
       "Icons": {
         "account": "Profile",
         "cart": "Cart",
