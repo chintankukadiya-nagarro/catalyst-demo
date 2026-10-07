@@ -134,14 +134,14 @@ export const nav = Group({
   preferredLayout: Group.Layout.Popover,
   props: {
     background: Color({ label: 'Background', defaultValue: hsl(colors.background) }),
-    floatingBorder: Color({ label: 'Floating border', defaultValue: hsl(colors.foreground, 0.1) }),
+    floatingBorder: Color({ label: 'Floating border', defaultValue: hsl(colors.foreground, 0.12) }),
     focus: Color({ label: 'Focus', defaultValue: hsl(colors.primary) }),
     link: elementGroup('Link', {
-      fontFamily: FontFamily.Body,
+      fontFamily: FontFamily.Heading,
       text: hsl(colors.foreground),
       textHover: hsl(colors.foreground),
       background: 'transparent',
-      backgroundHover: hsl(colors.contrast[100]),
+      backgroundHover: 'transparent',
     }),
     group: elementGroup('Group', {
       fontFamily: FontFamily.Body,
@@ -155,7 +155,7 @@ export const nav = Group({
       text: hsl(colors.contrast[500]),
       textHover: hsl(colors.foreground),
       background: 'transparent',
-      backgroundHover: hsl(colors.contrast[100]),
+      backgroundHover: 'transparent',
     }),
     button,
     menu,
