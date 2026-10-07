@@ -1,7 +1,12 @@
 import { MakeswiftComponent } from '@makeswift/runtime/next';
 import { type ComponentPropsWithoutRef } from 'react';
 
+import {
+  type EditorialMenuOverlayState,
+  emptyEditorialMenuOverlayState,
+} from '@/vibes/soul/primitives/editorial-menu-overlay';
 import { HeaderSection } from '@/vibes/soul/sections/header-section';
+import { asSecondaryNavLinks } from '~/lib/header/secondary-nav';
 import { getComponentSnapshot } from '~/lib/makeswift/client';
 
 import { PropsContextProvider } from './client';
@@ -19,10 +24,28 @@ export const SiteHeader = async ({
   ...props
 }: Props) => {
   const snapshot = await getComponentSnapshot(snapshotId);
-  const links = await navigation.links;
+  const [links, primaryLinks, secondaryLinksRaw] = await Promise.all([
+    navigation.links,
+    navigation.primaryLinks ?? navigation.links,
+    navigation.secondaryLinks ?? Promise.resolve([]),
+  ]);
+  const secondaryLinks = asSecondaryNavLinks(secondaryLinksRaw);
+  const menuOverlayState: EditorialMenuOverlayState =
+    navigation.menuOverlayState ?? emptyEditorialMenuOverlayState;
 
   return (
-    <PropsContextProvider value={{ ...props, navigation: { ...navigation, links } }}>
+    <PropsContextProvider
+      value={{
+        ...props,
+        navigation: {
+          ...navigation,
+          links,
+          primaryLinks,
+          secondaryLinks,
+          menuOverlayState,
+        },
+      }}
+    >
       <MakeswiftComponent label={label} snapshot={snapshot} type={COMPONENT_TYPE} />
     </PropsContextProvider>
   );

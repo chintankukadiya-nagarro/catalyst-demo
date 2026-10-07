@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { cache } from 'react';
 
 import { Streamable } from '@/vibes/soul/lib/streamable';
+import { emptyEditorialMenuOverlayState } from '@/vibes/soul/primitives/editorial-menu-overlay';
 import { GetLinksAndSectionsQuery, LayoutQuery } from '~/app/[locale]/(default)/page-data';
 import { getSessionCustomerAccessToken } from '~/auth';
 import { client } from '~/client';
@@ -12,6 +13,8 @@ import { logoTransformer } from '~/data-transformers/logo-transformer';
 import { getLocaleRouting } from '~/i18n/locale-config';
 import { getCartId } from '~/lib/cart';
 import { getPreferredCurrencyCode } from '~/lib/currency';
+import { categoryTreeToNavLinks } from '~/lib/header/category-nav-links';
+import { getDefaultSecondaryNavLinks } from '~/lib/header/secondary-nav';
 import { SiteHeader as HeaderSection } from '~/lib/makeswift/components/site-header';
 
 import { search } from './_actions/search';
@@ -73,6 +76,7 @@ const getHeaderData = cache(async () => {
 
 export const Header = async () => {
   const t = await getTranslations('Components.Header');
+  const tSecondaryNav = await getTranslations('Components.Header.SecondaryNav');
   const locale = await getLocale();
 
   const data = await getHeaderData();
@@ -97,34 +101,27 @@ export const Header = async () => {
         }))
     : [];
 
-  const streamableLinks = Streamable.from(async () => {
+  const streamablePrimaryLinks = Streamable.from(async () => {
     const [customerAccessToken, currencyCode] = await Promise.all([
       getSessionCustomerAccessToken(),
       getPreferredCurrencyCode(),
     ]);
-    // const customerAccessToken = await getSessionCustomerAccessToken();
-    // const currencyCode = await getPreferredCurrencyCode();
     const categoryTree = (await getHeaderLinks(customerAccessToken, currencyCode)).categoryTree;
 
-    /**  To prevent the navigation menu from overflowing, we limit the number of categories to 6.
-   To show a full list of categories, modify the `slice` method to remove the limit.
-   Will require modification of navigation menu styles to accommodate the additional categories.
-   */
-    const slicedTree = categoryTree.slice(0, 6);
-
-    return slicedTree.map(({ name, path, children }) => ({
-      label: name,
-      href: path,
-      groups: children.map((firstChild) => ({
-        label: firstChild.name,
-        href: firstChild.path,
-        links: firstChild.children.map((secondChild) => ({
-          label: secondChild.name,
-          href: secondChild.path,
-        })),
-      })),
-    }));
+    return categoryTreeToNavLinks(categoryTree);
   });
+
+  const streamableDefaultLinks = Streamable.from(async () => {
+    const [customerAccessToken, currencyCode] = await Promise.all([
+      getSessionCustomerAccessToken(),
+      getPreferredCurrencyCode(),
+    ]);
+    const categoryTree = (await getHeaderLinks(customerAccessToken, currencyCode)).categoryTree;
+
+    return categoryTreeToNavLinks(categoryTree, { limit: 6 });
+  });
+
+  const defaultSecondaryLinks = getDefaultSecondaryNavLinks((key) => tSecondaryNav(key));
 
   const streamableGiftCertificatesEnabled = Streamable.from(async () => {
     const [customerAccessToken, currencyCode] = await Promise.all([
@@ -171,7 +168,14 @@ export const Header = async () => {
         searchAction: search,
         searchInputPlaceholder: t('Search.inputPlaceholder'),
         searchSubmitLabel: t('Search.submitLabel'),
-        links: streamableLinks,
+        layoutVariant: 'editorial',
+        menuOverlayState: {
+          ...emptyEditorialMenuOverlayState,
+          defaultItems: defaultSecondaryLinks.map(({ label, href }) => ({ label, href })),
+        },
+        links: streamableDefaultLinks,
+        primaryLinks: streamablePrimaryLinks,
+        secondaryLinks: defaultSecondaryLinks,
         logo,
         mobileMenuTriggerLabel: t('toggleNavigation'),
         openSearchPopupLabel: t('Icons.search'),
