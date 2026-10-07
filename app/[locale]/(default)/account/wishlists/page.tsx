@@ -5,6 +5,7 @@ import { createSearchParamsCache, parseAsInteger, parseAsString } from 'nuqs/ser
 import { Streamable } from '@/vibes/soul/lib/streamable';
 import { CursorPaginationInfo } from '@/vibes/soul/primitives/cursor-pagination';
 import * as Skeleton from '@/vibes/soul/primitives/skeleton';
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { Wishlist } from '@/vibes/soul/sections/wishlist-details';
 import { WishlistsSection } from '@/vibes/soul/sections/wishlists-section';
 import { ExistingResultType } from '~/client/util';
@@ -68,8 +69,16 @@ export default async function Wishlists({ params, searchParams }: Props) {
   const isMobile = await isMobileUser();
   const newWishlistModal = getNewWishlistModal(t);
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Your Account', href: '/account/orders' },
+    { label: t('title'), href: '#' },
+  ];
+
   return (
-    <WishlistsSection
+    <>
+      <Breadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
+      <WishlistsSection
       actions={<NewWishlistButton label={t('new')} modal={newWishlistModal} variant="tertiary" />}
       emptyStateCallToAction={
         <NewWishlistButton label={t('noWishlistsCallToAction')} modal={newWishlistModal} />
@@ -126,5 +135,6 @@ export default async function Wishlists({ params, searchParams }: Props) {
       viewWishlistLabel={t('viewWishlist')}
       wishlists={Streamable.from(() => listWishlists(searchParams, t))}
     />
-  );
+  </>
+);
 }

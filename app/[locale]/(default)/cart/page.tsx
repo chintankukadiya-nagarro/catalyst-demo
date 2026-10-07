@@ -3,6 +3,7 @@ import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/serve
 
 import { Streamable } from '@/vibes/soul/lib/streamable';
 import { Price } from '@/vibes/soul/primitives/price-label';
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { Cart as CartComponent, CartEmptyState } from '@/vibes/soul/sections/cart';
 import { CartAnalyticsProvider } from '~/app/[locale]/(default)/cart/_components/cart-analytics-provider';
 import { ClientWalletButtons } from '~/components/wallet-buttons';
@@ -117,9 +118,17 @@ export default async function Cart({ params }: Props) {
   const format = await getFormatter();
   const cartId = await getCartId();
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: t('title'), href: '#' },
+  ];
+
   const emptyState = (
     <>
       <Slot label="Cart top content" snapshotId="cart-top-content" />
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pt-6 @xl:px-6 @4xl:px-8">
+        <Breadcrumbs breadcrumbs={breadcrumbs} />
+      </div>
       <CartEmptyState
         cta={{ label: t('Empty.cta'), href: '/shop-all' }}
         subtitle={t('Empty.subtitle')}
@@ -336,6 +345,9 @@ export default async function Cart({ params }: Props) {
   return (
     <>
       <Slot label="Cart top content" snapshotId="cart-top-content" />
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pt-6 @xl:px-6 @4xl:px-8">
+        <Breadcrumbs breadcrumbs={breadcrumbs} />
+      </div>
       <CartAnalyticsProvider data={Streamable.from(() => getAnalyticsData(cartId))}>
         {checkoutUrl ? <CheckoutPreconnect url={checkoutUrl} /> : null}
         <CartComponent

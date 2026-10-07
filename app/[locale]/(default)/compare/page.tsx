@@ -4,6 +4,7 @@ import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/serve
 import * as z from 'zod';
 
 import { Streamable } from '@/vibes/soul/lib/streamable';
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { CompareSection } from '@/vibes/soul/sections/compare-section';
 import { getSessionCustomerAccessToken } from '~/auth';
 import { pricesTransformer } from '~/data-transformers/prices-transformer';
@@ -125,8 +126,16 @@ export default async function Compare(props: Props) {
     });
   });
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: t('title'), href: '#' },
+  ];
+
   return (
     <CompareAnalyticsProvider data={streamableAnalyticsData}>
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pt-6 @xl:px-6 @4xl:px-8">
+        <Breadcrumbs breadcrumbs={breadcrumbs} />
+      </div>
       <CompareSection
         addToCartAction={addToCart}
         addToCartLabel={t('addToCart')}
