@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { ResetPasswordSection } from '@/vibes/soul/sections/reset-password-section';
 import { getChangePasswordQuery } from '~/app/[locale]/(default)/(auth)/change-password/page-data';
 import { redirect } from '~/i18n/navigation-server';
@@ -40,13 +41,23 @@ export default async function ChangePassword({ params, searchParams }: Props) {
 
   const { passwordComplexitySettings } = await getChangePasswordQuery();
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: t('title'), href: '#' },
+  ];
+
   return (
-    <ResetPasswordSection
-      action={changePassword.bind(null, { customerEntityId, token })}
-      confirmPasswordLabel={t('confirmPassword')}
-      newPasswordLabel={t('newPassword')}
-      passwordComplexitySettings={passwordComplexitySettings}
-      title={t('title')}
-    />
+    <>
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pt-6 @xl:px-6 @4xl:px-8">
+        <Breadcrumbs breadcrumbs={breadcrumbs} />
+      </div>
+      <ResetPasswordSection
+        action={changePassword.bind(null, { customerEntityId, token })}
+        confirmPasswordLabel={t('confirmPassword')}
+        newPasswordLabel={t('newPassword')}
+        passwordComplexitySettings={passwordComplexitySettings}
+        title={t('title')}
+      />
+    </>
   );
 }

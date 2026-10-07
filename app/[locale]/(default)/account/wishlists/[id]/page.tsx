@@ -5,6 +5,7 @@ import { createSearchParamsCache, parseAsInteger, parseAsString } from 'nuqs/ser
 
 import { Streamable } from '@/vibes/soul/lib/streamable';
 import { CursorPaginationInfo } from '@/vibes/soul/primitives/cursor-pagination';
+import { Breadcrumb, Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { Wishlist, WishlistDetails } from '@/vibes/soul/sections/wishlist-details';
 import { ExistingResultType } from '~/client/util';
 import { defaultPageInfo, pageInfoTransformer } from '~/data-transformers/page-info-transformer';
@@ -129,8 +130,24 @@ export default async function WishlistPage({ params, searchParams }: Props) {
     );
   };
 
+  const streamableWishlist = Streamable.from(() =>
+    getWishlist(id, t, pt, searchParams, locale),
+  );
+
+  const streamableBreadcrumbs = Streamable.from(async (): Promise<Breadcrumb[]> => {
+    const wishlist = await streamableWishlist;
+
+    return [
+      { label: 'Home', href: '/' },
+      { label: 'Your Account', href: '/account/orders' },
+      { label: 'Wish lists', href: '/account/wishlists' },
+      { label: wishlist.name, href: '#' },
+    ];
+  });
+
   return (
     <WishlistAnalyticsProvider data={Streamable.from(() => getAnalyticsData(id, searchParams))}>
+      <Breadcrumbs breadcrumbs={streamableBreadcrumbs} className="mb-6" />
       <WishlistDetails
         action={addWishlistItemToCart}
         emptyStateText={t('emptyWishlist')}
@@ -139,7 +156,7 @@ export default async function WishlistPage({ params, searchParams }: Props) {
         prevHref="/account/wishlists"
         removeAction={removeWishlistItem}
         removeButtonTitle={t('removeButtonTitle')}
-        wishlist={Streamable.from(() => getWishlist(id, t, pt, searchParams, locale))}
+        wishlist={streamableWishlist}
       />
     </WishlistAnalyticsProvider>
   );

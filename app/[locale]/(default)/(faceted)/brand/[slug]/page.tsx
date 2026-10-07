@@ -220,8 +220,15 @@ export default async function Brand(props: Props) {
     }));
   });
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Brands', href: '/brands' },
+    { label: brand.name, href: '#' },
+  ];
+
   return (
     <ProductsListSection
+      breadcrumbs={breadcrumbs}
       compareLabel={t('Compare.compare')}
       compareProducts={streamableCompareProducts}
       emptyStateSubtitle={t('Brand.Empty.subtitle')}

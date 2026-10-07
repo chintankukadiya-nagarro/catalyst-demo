@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { GiftCertificatesSection } from '@/vibes/soul/sections/gift-certificates-section';
 import { redirect } from '~/i18n/navigation-server';
 import { getPreferredCurrencyCode } from '~/lib/currency';
@@ -45,16 +46,26 @@ export default async function GiftCertificates(props: Props) {
     currency: currencyCode ?? data.defaultCurrency,
   });
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: t('title'), href: '#' },
+  ];
+
   return (
-    <GiftCertificatesSection
-      checkBalanceHref="/gift-certificates/balance"
-      checkBalanceLabel={t('checkBalanceLabel')}
-      description={t('description')}
-      exampleBalance={exampleBalance}
-      logo={data.logo}
-      purchaseHref="/gift-certificates/purchase"
-      purchaseLabel={t('purchaseLabel')}
-      title={t('title')}
-    />
+    <>
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pt-6 @xl:px-6 @4xl:px-8">
+        <Breadcrumbs breadcrumbs={breadcrumbs} />
+      </div>
+      <GiftCertificatesSection
+        checkBalanceHref="/gift-certificates/balance"
+        checkBalanceLabel={t('checkBalanceLabel')}
+        description={t('description')}
+        exampleBalance={exampleBalance}
+        logo={data.logo}
+        purchaseHref="/gift-certificates/purchase"
+        purchaseLabel={t('purchaseLabel')}
+        title={t('title')}
+      />
+    </>
   );
 }

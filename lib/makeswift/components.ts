@@ -1,8 +1,10 @@
 import './components/accordion/register';
+import './components/breadcrumbs/register';
 import './components/button-link/register';
 import './components/card/register';
 import './components/card-carousel/register';
 import './components/category-grid/register';
+import './components/brand-directory/register';
 import './components/carousel/register';
 import './components/customer-group-slot/register';
 import './components/product-card/register';
@@ -13,5 +15,7 @@ import './components/section/register';
 import './components/site-footer/register';
 import './components/site-header/register';
 import './components/site-theme/register';
+import './components/peek-slideshow/register';
 import './components/slideshow/register';
 import './components/sticky-sidebar/register';
+import './components/tab-carousel/register';

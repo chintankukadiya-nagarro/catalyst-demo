@@ -5,9 +5,11 @@ import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/serve
 import { SearchParams } from 'nuqs/server';
 
 import { Stream, Streamable } from '@/vibes/soul/lib/streamable';
+import { Breadcrumb } from '@/vibes/soul/sections/breadcrumbs';
 import { FeaturedProductCarousel } from '@/vibes/soul/sections/featured-product-carousel';
 import { ProductVideos } from '@/vibes/soul/sections/product-detail/product-videos';
 import { auth, getSessionCustomerAccessToken } from '~/auth';
+import { breadcrumbsTransformer } from '~/data-transformers/breadcrumbs-transformer';
 import { rewriteWysiwygContentUrls } from '~/data-transformers/html-content-transformer';
 import { pricesTransformer } from '~/data-transformers/prices-transformer';
 import { productCardTransformer } from '~/data-transformers/product-card-transformer';
@@ -571,6 +573,17 @@ export default async function Product({ params, searchParams }: Props) {
     return { email: session?.user?.email ?? '', name: obfuscatedName };
   });
 
+  const streamableBreadcrumbs = Streamable.from(async (): Promise<Breadcrumb[]> => {
+    const category = removeEdgesAndNodes(baseProduct.categories).at(0);
+    const categoryBreadcrumbs = category ? breadcrumbsTransformer(category.breadcrumbs) : [];
+
+    return [
+      { label: 'Home', href: '/' },
+      ...categoryBreadcrumbs,
+      { label: baseProduct.name, href: '#' },
+    ];
+  });
+
   return (
     <>
       <ProductAnalyticsProvider data={streamableAnalyticsData}>
@@ -584,6 +597,7 @@ export default async function Product({ params, searchParams }: Props) {
             />
           }
           additionalInformationTitle={t('ProductDetails.additionalInformation')}
+          breadcrumbs={streamableBreadcrumbs}
           ctaDisabled={streameableCtaDisabled}
           ctaLabel={streameableCtaLabel}
           decrementLabel={t('ProductDetails.decreaseQuantity')}
