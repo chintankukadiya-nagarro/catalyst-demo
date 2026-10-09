@@ -526,6 +526,7 @@
       "thumbnail": "View image number",
       "additionalInformation": "Additional information",
       "currentStock": "{quantity, number} in stock",
+      "inStock": "In stock",
       "backorderQuantity": "{quantity, number} will be on backorder",
       "maxPurchasableQuantity": "The maximum purchasable quantity is {quantity, number}. Please adjust and try again.",
       "loadingMoreImages": "Loading more images",
@@ -547,6 +548,20 @@
         "sku": "SKU",
         "weight": "Weight",
         "condition": "Condition"
+      },
+      "GuideLinks": {
+        "wrapping": "About wrapping and message cards",
+        "shipping": "Shipping and Delivery Information",
+        "returns": "Non-returnable and non-exchangeable items",
+        "preorder": "About pre-orders and made-to-order products"
+      },
+      "CategoryHierarchy": {
+        "label": "Product Category:"
+      },
+      "CareGuide": {
+        "title": "CARE GUIDE",
+        "subtitle": "About Care",
+        "washNotice": "Washing Instructions: Please check the product label for details"
       }
     },
     "RelatedProducts": {

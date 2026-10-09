@@ -41,6 +41,26 @@ import {
   getStreamableProductVariantInventory,
 } from './page-data';
 
+/**
+ * Custom field names used for the Care Guide section.
+ * These are managed by the client in BigCommerce Admin → Products → Custom Fields.
+ * Fields matching these names (or the `guide_link_` prefix) are extracted
+ * separately and excluded from the Specifications accordion.
+ */
+const CARE_GUIDE_FIELD_NAMES = new Set([
+  'care_guide_title',
+  'care_guide_subtitle',
+  'care_wash_notice',
+  'care_instructions',
+]);
+
+const GUIDE_LINK_PREFIX = 'guide_link_';
+
+/** Returns true if the custom field is reserved for care guide / guide links. */
+function isCareGuideField(name: string): boolean {
+  return CARE_GUIDE_FIELD_NAMES.has(name) || name.startsWith(GUIDE_LINK_PREFIX);
+}
+
 interface Props {
   params: Promise<{ slug: string; locale: string }>;
   searchParams: Promise<SearchParams>;
@@ -190,7 +210,7 @@ export default async function Product({ params, searchParams }: Props) {
       return null;
     }
 
-    return pricesTransformer(product, format, taxDisplay) ?? null;
+    return pricesTransformer(product, format, taxDisplay ?? 'INC') ?? null;
   });
 
   const streamableImages = Streamable.from(async () => {
@@ -335,7 +355,10 @@ export default async function Product({ params, searchParams }: Props) {
     } = inventory.aggregated ?? {};
 
     if (stockLevelDisplay === 'DONT_SHOW') {
-      return null;
+      return {
+        stockLevelMessage: t('ProductDetails.inStock'),
+        backorderAvailabilityPrompt: null,
+      };
     }
 
     const showsBackorderInfo =
@@ -467,10 +490,12 @@ export default async function Product({ params, searchParams }: Props) {
         name: t('ProductDetails.Accordions.condition'),
         value: product.condition,
       },
-      ...customFields.map((field) => ({
-        name: field.name,
-        value: field.value,
-      })),
+      ...customFields
+        .filter((field) => !isCareGuideField(field.name))
+        .map((field) => ({
+          name: field.name,
+          value: field.value,
+        })),
     ];
 
     return [
@@ -511,6 +536,44 @@ export default async function Product({ params, searchParams }: Props) {
           ]
         : []),
     ];
+  });
+
+  /**
+   * Extracts care-guide and guide-link data from product custom fields.
+   * The client manages these via BigCommerce Admin → Products → Custom Fields.
+   *
+   * Recognised field names:
+   *   care_guide_title, care_guide_subtitle, care_wash_notice, care_instructions
+   *   guide_link_1_label / guide_link_1_url, guide_link_2_label / guide_link_2_url, …
+   */
+  const streamableCareGuideData = Streamable.from(async () => {
+    const product = await streamableProduct;
+    const customFields = removeEdgesAndNodes(product.customFields);
+
+    const getField = (name: string) =>
+      customFields.find((f) => f.name === name)?.value;
+
+    // Care guide section overrides
+    const careGuide = {
+      title: getField('care_guide_title'),
+      subtitle: getField('care_guide_subtitle'),
+      washNotice: getField('care_wash_notice'),
+      careInstructions: getField('care_instructions'),
+    };
+
+    // Guide links: collect pairs of guide_link_N_label / guide_link_N_url
+    const links: Array<{ label: string; href: string; target?: string }> = [];
+
+    for (let i = 1; i <= 10; i++) {
+      const label = getField(`guide_link_${i}_label`);
+      const url = getField(`guide_link_${i}_url`);
+
+      if (label && url) {
+        links.push({ label, href: url, target: '_blank' });
+      }
+    }
+
+    return { careGuide, links: links.length > 0 ? links : undefined };
   });
 
   const streameableRelatedProducts = Streamable.from(async () => {
@@ -625,7 +688,31 @@ export default async function Product({ params, searchParams }: Props) {
             reviewsEnabled,
             showRating,
             numberOfReviews: baseProduct.reviewSummary.numberOfReviews,
-            subtitle: baseProduct.brand?.name,
+            badge:
+              'customFields' in baseProduct && baseProduct.customFields
+                ? removeEdgesAndNodes(baseProduct.customFields).find(
+                    (field) => field.name.toLowerCase() === 'badge',
+                  )?.value
+                : undefined,
+            subtitle:
+              baseProduct.brand?.name === 'STEVE MADDEN'
+                ? 'STEVE MADDEN スティーブ・マデン'
+                : baseProduct.brand?.name,
+            brandLink: baseProduct.brand?.name ? `/brands/${baseProduct.brand.name.toLowerCase().replace(/\s+/g, '-')}` : undefined,
+            category: (() => {
+              const category = removeEdgesAndNodes(baseProduct.categories).at(0);
+              const crumbs = category ? breadcrumbsTransformer(category.breadcrumbs) : [];
+              const lastCrumb = crumbs.at(-1);
+              if (lastCrumb && lastCrumb.href) {
+                return { name: lastCrumb.label, href: lastCrumb.href };
+              }
+              return undefined;
+            })(),
+            categoryHierarchy: (() => {
+              const category = removeEdgesAndNodes(baseProduct.categories).at(0);
+              const crumbs = category ? breadcrumbsTransformer(category.breadcrumbs) : [];
+              return crumbs.map((c) => ({ label: c.label, href: c.href }));
+            })(),
             rating: baseProduct.reviewSummary.averageRating,
             accordions: streameableAccordions,
             minQuantity: streamableMinQuantity,
@@ -633,6 +720,7 @@ export default async function Product({ params, searchParams }: Props) {
             stockDisplayData: streamableStockDisplayData,
             backorderDisplayData: streamableBackorderDisplayData,
           }}
+          careGuideData={streamableCareGuideData}
           productId={baseProduct.entityId}
           promotionCallouts={promotionCallouts}
           quantityLabel={t('ProductDetails.quantity')}

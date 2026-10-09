@@ -524,6 +524,7 @@
             "thumbnail": "画像番号を表示",
             "additionalInformation": "追加情報",
             "currentStock": "{quantity, number} 個の在庫あり",
+            "inStock": "在庫あり",
             "backorderQuantity": "{quantity, number} はバックオーダーになります",
             "maxPurchasableQuantity": "購入可能な最大数量は{quantity, number}です。調整して、もう一度お試しください。",
             "loadingMoreImages": "さらに画像を読み込んでいます",
@@ -717,10 +718,10 @@
             "originalPrice": "元の価格は{price}でした。",
             "currentPrice": "現在の価格は{price}です。",
             "range": "価格は{minValue}から{maxValue}までです。",
-            "includingTax": "(株式会社)税）",
-            "excludingTax": "（元。税）",
+            "includingTax": "(税込)",
+            "excludingTax": "(税抜)",
             "includingTaxFull": "税込",
-            "excludingTaxFull": "税別"
+            "excludingTaxFull": "税抜"
         }
     },
     "GiftCertificates": {

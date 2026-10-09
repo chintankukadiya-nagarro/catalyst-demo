@@ -7,8 +7,10 @@ import {
 } from 'storefront-kit/callout';
 
 import { Stream, Streamable } from '@/vibes/soul/lib/streamable';
+import { Link } from '~/components/link';
 import { Accordion, AccordionItem } from '@/vibes/soul/primitives/accordion';
 import { AnimatedUnderline } from '@/vibes/soul/primitives/animated-underline';
+import { Badge } from '@/vibes/soul/primitives/badge';
 import { Price, PriceLabel } from '@/vibes/soul/primitives/price-label';
 import * as Skeleton from '@/vibes/soul/primitives/skeleton';
 import { type Breadcrumb, Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
@@ -24,6 +26,9 @@ import {
   ProductDetailFormAction,
   StockDisplayData,
 } from './product-detail-form';
+import { ProductCareGuide } from './product-care-guide';
+import { ProductCategoryHierarchy, ProductCategoryHierarchyItem } from './product-category-hierarchy';
+import { GuideLinkItem, ProductGuideLinks } from './product-guide-links';
 import { RatingLink } from './rating-link';
 import { Field } from './schema';
 
@@ -37,6 +42,8 @@ interface ProductDetailProduct {
   }>;
   price?: Streamable<Price | null>;
   subtitle?: string;
+  brandLink?: string;
+  category?: { name: string; href: string };
   badge?: string;
   rating?: Streamable<number | null>;
   reviewsEnabled?: boolean;
@@ -54,6 +61,23 @@ interface ProductDetailProduct {
   maxQuantity?: Streamable<number | null>;
   stockDisplayData?: Streamable<StockDisplayData | null>;
   backorderDisplayData?: Streamable<BackorderDisplayData | null>;
+  categoryHierarchy?: ProductCategoryHierarchyItem[];
+}
+
+/**
+ * Care guide data extracted from BigCommerce product custom fields.
+ * All fields are optional — when absent, the component falls back to
+ * translated defaults from the messages file.
+ */
+export interface CareGuideData {
+  careGuide: {
+    title?: string;
+    subtitle?: string;
+    washNotice?: string;
+    careInstructions?: string;
+  };
+  /** Guide links. When undefined, the component renders its default links. */
+  links?: GuideLinkItem[];
 }
 
 export interface ProductDetailProps<F extends Field> {
@@ -83,6 +107,8 @@ export interface ProductDetailProps<F extends Field> {
   user: Streamable<{ email: string; name: string }>;
   loadMoreImagesAction?: ProductGalleryLoadMoreAction;
   recaptchaSiteKey?: string;
+  /** Care guide data from product custom fields. Falls back to defaults when absent. */
+  careGuideData?: Streamable<CareGuideData | null>;
 }
 
 // eslint-disable-next-line valid-jsdoc
@@ -127,6 +153,7 @@ export function ProductDetail<F extends Field>({
   user,
   loadMoreImagesAction,
   recaptchaSiteKey,
+  careGuideData: streamableCareGuideData,
 }: ProductDetailProps<F>) {
   return (
     <section className="@container">
@@ -154,10 +181,46 @@ export function ProductDetail<F extends Field>({
                 </div>
                 {/* Product Details */}
                 <div className="text-[var(--product-detail-primary-text,hsl(var(--foreground)))]">
-                  {Boolean(product.subtitle) && (
-                    <p className="font-[family-name:var(--product-detail-subtitle-font-family,var(--font-family-mono))] text-sm uppercase">
-                      {product.subtitle}
-                    </p>
+                  {Boolean(product.subtitle || product.category) && (
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      {product.subtitle && (
+                        <div>
+                          {product.brandLink ? (
+                            <Link
+                              className="font-[family-name:var(--product-detail-subtitle-font-family,var(--font-family-mono))] text-sm font-semibold tracking-wider text-[var(--product-detail-secondary-text,hsl(var(--contrast-500)))] hover:underline"
+                              href={product.brandLink}
+                            >
+                              {product.subtitle}
+                            </Link>
+                          ) : (
+                            <span className="font-[family-name:var(--product-detail-subtitle-font-family,var(--font-family-mono))] text-sm font-semibold tracking-wider text-[var(--product-detail-secondary-text,hsl(var(--contrast-500)))]">
+                              {product.subtitle}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {product.category && (
+                        <div>
+                          {product.category.href ? (
+                            <Link
+                              className="inline-block rounded-sm bg-contrast-100 px-2.5 py-0.5 text-xs font-medium text-contrast-600 transition-colors hover:bg-contrast-200"
+                              href={product.category.href}
+                            >
+                              {product.category.name}
+                            </Link>
+                          ) : (
+                            <span className="inline-block rounded-sm bg-contrast-100 px-2.5 py-0.5 text-xs font-medium text-contrast-600">
+                              {product.category.name}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {product.badge != null && product.badge !== '' && (
+                    <div className="mb-2">
+                      <Badge shape="rounded">{product.badge}</Badge>
+                    </div>
                   )}
                   <h1 className="mb-3 mt-2 font-[family-name:var(--product-detail-title-font-family,var(--font-family-heading))] text-2xl font-medium leading-none @xl:mb-4 @xl:text-3xl @4xl:text-4xl">
                     {product.title}
@@ -202,11 +265,20 @@ export function ProductDetail<F extends Field>({
                       </Stream>
                     </div>
                   )}
-                  <div className="group/product-price">
+                  <div className="group/product-price flex items-center gap-3">
                     <Stream fallback={<PriceLabelSkeleton />} value={product.price}>
                       {(price) => (
                         <PriceLabel className="my-3 text-xl @xl:text-2xl" price={price ?? ''} />
                       )}
+                    </Stream>
+                    <Stream fallback={null} value={product.stockDisplayData}>
+                      {(stock) =>
+                        stock?.stockLevelMessage ? (
+                          <span className="inline-flex items-center rounded-sm bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                            {stock.stockLevelMessage}
+                          </span>
+                        ) : null
+                      }
                     </Stream>
                   </div>
                   {promotionCallouts != null && (
@@ -296,6 +368,12 @@ export function ProductDetail<F extends Field>({
                       )}
                     </Stream>
                   </div>
+                  {product.categoryHierarchy && product.categoryHierarchy.length > 0 && (
+                    <div className="border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] pt-6 pb-2">
+                      <ProductCategoryHierarchy categories={product.categoryHierarchy} />
+                    </div>
+                  )}
+
                   <div className="group/product-description">
                     <Stream fallback={<ProductDescriptionSkeleton />} value={product.description}>
                       {(description) =>
@@ -307,6 +385,30 @@ export function ProductDetail<F extends Field>({
                       }
                     </Stream>
                   </div>
+
+                  <Stream
+                    fallback={
+                      <div className="border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] pt-6">
+                        <ProductCareGuide />
+                      </div>
+                    }
+                    value={streamableCareGuideData}
+                  >
+                    {(data) => (
+                      <>
+                        <div className="border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] pt-6">
+                          <ProductCareGuide
+                            careInstructions={data?.careGuide.careInstructions}
+                            title={data?.careGuide.title}
+                            washNotice={data?.careGuide.washNotice}
+                          />
+                        </div>
+
+                        <ProductGuideLinks links={data?.links} />
+                      </>
+                    )}
+                  </Stream>
+
                   <h2 className="sr-only">{additionalInformationTitle}</h2>
                   <div className="group/product-accordion">
                     <Stream fallback={<ProductAccordionsSkeleton />} value={product.accordions}>

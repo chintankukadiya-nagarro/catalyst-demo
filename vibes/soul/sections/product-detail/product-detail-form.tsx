@@ -278,16 +278,12 @@ export function ProductDetailForm<F extends Field>({
             </FormStatus>
           ))}
 
-          <div className="h-[3.2rem] sm:h-[2.6rem]">
+          <div className="h-auto pb-2">
             {!!stockDisplayData?.stockLevelMessage && (
               <div
                 className={clsx(
-                  'flex flex-wrap justify-start gap-x-2.5 gap-y-2 text-sm text-[var(--product-detail-secondary-text,hsl(var(--contrast-500)))]',
-                  'transition-transform duration-200 ease-in-out',
-                  backorderMessages?.backorderQuantityMessage ||
-                    backorderMessages?.backorderInfoMessage
-                    ? 'translate-y-0'
-                    : 'translate-y-[calc(100%+4px)]',
+                  'flex flex-wrap items-center justify-start gap-x-2.5 gap-y-2 text-sm text-[var(--product-detail-secondary-text,hsl(var(--contrast-500)))]',
+                  'translate-y-0',
                 )}
               >
                 <div className="flex-none whitespace-nowrap font-semibold text-black">
