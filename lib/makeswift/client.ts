@@ -60,19 +60,69 @@ export const client = new CatalystMakeswift(process.env.MAKESWIFT_SITE_API_KEY, 
   runtime,
 });
 
-export const getPageSnapshot = async ({ path, locale }: { path: string; locale: string }) =>
-  await client.getPageSnapshot(path, {
-    siteVersion: await getSiteVersion(),
-    locale: await normalizeLocale(locale),
-  });
+export const getPageSnapshot = async ({ path, locale }: { path: string; locale: string }) => {
+  const siteVersion = await getSiteVersion();
+  const normalizedLocale = await normalizeLocale(locale);
+
+  try {
+    const snapshot = await client.getPageSnapshot(path, {
+      siteVersion,
+      locale: normalizedLocale,
+    });
+
+    if (snapshot != null) {
+      return snapshot;
+    }
+  } catch {
+    // localized snapshot fetch failed, fall through to default locale fallback
+  }
+
+  // Fallback to default locale if a localized snapshot was not found
+  if (normalizedLocale !== undefined) {
+    try {
+      return await client.getPageSnapshot(path, {
+        siteVersion,
+        locale: undefined,
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+};
 
 export const getComponentSnapshot = async (snapshotId: string) => {
   const locale = await getLocale();
+  const siteVersion = await getSiteVersion();
+  const normalizedLocale = locale ? await normalizeLocale(locale) : undefined;
 
-  return await client.getComponentSnapshot(snapshotId, {
-    siteVersion: await getSiteVersion(),
-    locale: await normalizeLocale(locale),
-  });
+  try {
+    const snapshot = await client.getComponentSnapshot(snapshotId, {
+      siteVersion,
+      locale: normalizedLocale,
+    });
+
+    if (snapshot != null) {
+      return snapshot;
+    }
+  } catch {
+    // localized component fetch failed, fall through to default locale fallback
+  }
+
+  // Fallback to default locale if localized component was not found
+  if (normalizedLocale !== undefined) {
+    try {
+      return await client.getComponentSnapshot(snapshotId, {
+        siteVersion,
+        locale: undefined,
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 };
 
 async function normalizeLocale(locale: string): Promise<string | undefined> {
@@ -82,11 +132,36 @@ async function normalizeLocale(locale: string): Promise<string | undefined> {
 }
 
 export async function getMakeswiftPageMetadata({ path, locale }: { path: string; locale: string }) {
-  const { data: pages } = await client.getPages({
-    pathPrefix: path,
-    locale: await normalizeLocale(locale),
-    siteVersion: await getSiteVersion(),
-  });
+  const siteVersion = await getSiteVersion();
+  const normalizedLocale = await normalizeLocale(locale);
+
+  let pages: Awaited<ReturnType<typeof client.getPages>>['data'] = [];
+
+  try {
+    const { data } = await client.getPages({
+      pathPrefix: path,
+      locale: normalizedLocale,
+      siteVersion,
+    });
+
+    pages = data;
+  } catch {
+    pages = [];
+  }
+
+  if ((pages.length === 0 || !pages[0]) && normalizedLocale !== undefined) {
+    try {
+      const { data } = await client.getPages({
+        pathPrefix: path,
+        locale: undefined,
+        siteVersion,
+      });
+
+      pages = data;
+    } catch {
+      pages = [];
+    }
+  }
 
   if (pages.length === 0 || !pages[0]) {
     return null;
