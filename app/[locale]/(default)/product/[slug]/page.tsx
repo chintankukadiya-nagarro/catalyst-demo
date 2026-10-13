@@ -56,9 +56,58 @@ const CARE_GUIDE_FIELD_NAMES = new Set([
 
 const GUIDE_LINK_PREFIX = 'guide_link_';
 
-/** Returns true if the custom field is reserved for care guide / guide links. */
+/** Returns true if the custom field is reserved for care guide / guide links / guide visibility. */
 function isCareGuideField(name: string): boolean {
-  return CARE_GUIDE_FIELD_NAMES.has(name) || name.startsWith(GUIDE_LINK_PREFIX);
+  const normalized = name.trim().toLowerCase();
+
+  return (
+    CARE_GUIDE_FIELD_NAMES.has(name) ||
+    name.startsWith(GUIDE_LINK_PREFIX) ||
+    normalized === 'show guide' ||
+    normalized === 'show guid' ||
+    normalized === 'show_guide'
+  );
+}
+
+const STAFF_VOICE_FIELD_NAMES = new Set([
+  'staff_voice',
+  'staff_note',
+  'staff_voice_title',
+  'staff_note_title',
+  'staff_voice_html',
+  'staff_note_html',
+  'staff_voice_content',
+  'staff_note_content',
+]);
+
+const STAFF_VOICE_LINK_PREFIX = 'staff_voice_link_';
+const STAFF_NOTE_LINK_PREFIX = 'staff_note_link_';
+
+function isStaffVoiceField(name: string): boolean {
+  const normalized = name.trim().toLowerCase();
+
+  return (
+    STAFF_VOICE_FIELD_NAMES.has(normalized) ||
+    normalized.startsWith(STAFF_VOICE_LINK_PREFIX) ||
+    normalized.startsWith(STAFF_NOTE_LINK_PREFIX) ||
+    normalized === 'show staff voice' ||
+    normalized === 'show_staff_voice' ||
+    normalized === 'show staff note' ||
+    normalized === 'show_staff_note'
+  );
+}
+
+function isSizeGuideField(name: string): boolean {
+  const normalized = name.trim().toLowerCase();
+
+  return (
+    normalized === 'size chart' ||
+    normalized === 'size_chart' ||
+    normalized === 'sizechart' ||
+    normalized === 'size guide' ||
+    normalized === 'size_guide' ||
+    normalized === 'sizeguide'
+  );
 }
 
 interface Props {
@@ -121,10 +170,9 @@ export default async function Product({ params, searchParams }: Props) {
 
   const productId = Number(slug);
 
-  const [{ product: baseProduct, settings }, recaptchaSiteKey, sizeGuideContent] = await Promise.all([
+  const [{ product: baseProduct, settings }, recaptchaSiteKey] = await Promise.all([
     getProduct(productId, customerAccessToken),
     getRecaptchaSiteKey(),
-    getSizeGuideContent(customerAccessToken),
   ]);
 
   const reviewsEnabled = Boolean(settings?.reviews.enabled && !settings.display.showProductRating);
@@ -134,6 +182,33 @@ export default async function Product({ params, searchParams }: Props) {
   if (!baseProduct) {
     return notFound();
   }
+
+  const baseCustomFields = removeEdgesAndNodes(baseProduct.customFields);
+  const sizeChartField =
+    baseCustomFields.find((f) => {
+      const name = f.name.trim().toLowerCase();
+
+      return name === 'size chart' || name === 'size_chart' || name === 'sizechart';
+    })?.value ??
+    (() => {
+      const title = baseProduct.name.toLowerCase();
+      const categoryName = (
+        removeEdgesAndNodes(baseProduct.categories).at(0)?.name ?? ''
+      ).toLowerCase();
+      const combined = `${title} ${categoryName}`;
+
+      if (/bag|pack|backpack|daypack|バッグ|リュック/.test(combined)) {
+        return 'bag';
+      }
+
+      if (/shoe|boot|sneaker|footwear|sandal|シューズ|靴|ブーツ/.test(combined)) {
+        return 'shoe';
+      }
+
+      return undefined;
+    })();
+
+  const sizeGuideContent = await getSizeGuideContent(sizeChartField, customerAccessToken);
 
   const streamableProduct = Streamable.from(async () => {
     const variables = {
@@ -491,7 +566,12 @@ export default async function Product({ params, searchParams }: Props) {
         value: product.condition,
       },
       ...customFields
-        .filter((field) => !isCareGuideField(field.name))
+        .filter(
+          (field) =>
+            !isCareGuideField(field.name) &&
+            !isStaffVoiceField(field.name) &&
+            !isSizeGuideField(field.name),
+        )
         .map((field) => ({
           name: field.name,
           value: field.value,
@@ -550,8 +630,22 @@ export default async function Product({ params, searchParams }: Props) {
     const product = await streamableProduct;
     const customFields = removeEdgesAndNodes(product.customFields);
 
-    const getField = (name: string) =>
-      customFields.find((f) => f.name === name)?.value;
+    const getField = (name: string) => {
+      const lower = name.toLowerCase();
+
+      return customFields.find((f) => f.name.trim().toLowerCase() === lower)?.value;
+    };
+
+    // Check if "Show Guide" is set to "Yes"
+    const showGuideVal =
+      getField('show guide') ?? getField('show guid') ?? getField('show_guide');
+    const isGuideEnabled =
+      showGuideVal != null &&
+      ['yes', 'true', '1', 'y'].includes(showGuideVal.trim().toLowerCase());
+
+    if (!isGuideEnabled) {
+      return null;
+    }
 
     // Care guide section overrides
     const careGuide = {
@@ -574,6 +668,70 @@ export default async function Product({ params, searchParams }: Props) {
     }
 
     return { careGuide, links: links.length > 0 ? links : undefined };
+  });
+
+  const streamableStaffNote = Streamable.from(async () => {
+    const product = await streamableProduct;
+    const customFields = removeEdgesAndNodes(product.customFields);
+
+    const getField = (name: string) => {
+      const lower = name.toLowerCase();
+
+      return customFields.find((f) => f.name.trim().toLowerCase() === lower)?.value;
+    };
+
+    // Check if staff voice / note is explicitly disabled
+    const showVoiceVal =
+      getField('show staff voice') ??
+      getField('show_staff_voice') ??
+      getField('show staff note') ??
+      getField('show_staff_note');
+
+    if (
+      showVoiceVal != null &&
+      ['no', 'false', '0', 'n'].includes(showVoiceVal.trim().toLowerCase())
+    ) {
+      return null;
+    }
+
+    const title =
+      getField('staff_voice_title') ??
+      getField('staff_note_title') ??
+      'STAFF VOICE';
+
+    const content =
+      getField('staff_voice') ??
+      getField('staff_note') ??
+      getField('staff_voice_content') ??
+      getField('staff_note_content');
+
+    const html =
+      getField('staff_voice_html') ??
+      getField('staff_note_html');
+
+    const links: Array<{ label: string; href: string }> = [];
+
+    for (let i = 1; i <= 5; i++) {
+      const label =
+        getField(`staff_voice_link_${i}_label`) ??
+        getField(`staff_note_link_${i}_label`);
+      const href =
+        getField(`staff_voice_link_${i}_url`) ??
+        getField(`staff_note_link_${i}_url`) ??
+        getField(`staff_voice_link_${i}_href`) ??
+        getField(`staff_note_link_${i}_href`);
+
+      if (label && href) {
+        links.push({ label, href });
+      }
+    }
+
+    return {
+      title,
+      content,
+      html,
+      links: links.length > 0 ? links : undefined,
+    };
   });
 
   const streameableRelatedProducts = Streamable.from(async () => {
@@ -694,10 +852,7 @@ export default async function Product({ params, searchParams }: Props) {
                     (field) => field.name.toLowerCase() === 'badge',
                   )?.value
                 : undefined,
-            subtitle:
-              baseProduct.brand?.name === 'STEVE MADDEN'
-                ? 'STEVE MADDEN スティーブ・マデン'
-                : baseProduct.brand?.name,
+            subtitle: baseProduct.brand?.name,
             brandLink: baseProduct.brand?.name ? `/brands/${baseProduct.brand.name.toLowerCase().replace(/\s+/g, '-')}` : undefined,
             category: (() => {
               const category = removeEdgesAndNodes(baseProduct.categories).at(0);
@@ -721,6 +876,7 @@ export default async function Product({ params, searchParams }: Props) {
             backorderDisplayData: streamableBackorderDisplayData,
           }}
           careGuideData={streamableCareGuideData}
+          staffNoteData={streamableStaffNote}
           productId={baseProduct.entityId}
           promotionCallouts={promotionCallouts}
           quantityLabel={t('ProductDetails.quantity')}

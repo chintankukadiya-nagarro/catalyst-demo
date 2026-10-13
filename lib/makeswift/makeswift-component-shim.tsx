@@ -12,5 +12,9 @@ import { MakeswiftComponent } from '@makeswift/runtime/next';
 import { ComponentPropsWithoutRef } from 'react';
 
 export function MakeswiftComponentShim(props: ComponentPropsWithoutRef<typeof MakeswiftComponent>) {
+  if (!props.snapshot) {
+    return null;
+  }
+
   return <MakeswiftComponent {...props} />;
 }

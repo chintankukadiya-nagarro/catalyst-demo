@@ -3,6 +3,7 @@ import { Makeswift } from '@makeswift/runtime/next';
 import { getSiteVersion } from '@makeswift/runtime/next/server';
 import { strict } from 'assert';
 import { getLocale } from 'next-intl/server';
+import { cache } from 'react';
 
 import { getLocaleRouting } from '~/i18n/locale-config';
 
@@ -125,10 +126,80 @@ export const getComponentSnapshot = async (snapshotId: string) => {
   return null;
 };
 
+const getMakeswiftSupportedLocales = cache(async (): Promise<string[]> => {
+  const apiKey = process.env.MAKESWIFT_SITE_API_KEY;
+
+  if (!apiKey) {
+    return [];
+  }
+
+  try {
+    const res = await fetch('https://api.makeswift.com/graphql', {
+      method: 'POST',
+      headers: {
+        'makeswift-site-api-key': apiKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: 'query GetSite($apiKey: String!) { siteByApiKey(apiKey: $apiKey) { id } }',
+        variables: { apiKey },
+      }),
+      next: { revalidate: MAKESWIFT_REVALIDATE_TARGET || 3600 },
+    });
+
+    if (!res.ok) {
+      return [];
+    }
+
+    const data = await res.json();
+    const rawId = data?.data?.siteByApiKey?.id;
+
+    if (!rawId) {
+      return [];
+    }
+
+    const siteUuid = Buffer.from(rawId, 'base64').toString('utf8').replace(/^Site:/, '');
+    const localesRes = await fetch(`https://api.makeswift.com/v2/locales?siteId=${siteUuid}`, {
+      headers: { 'makeswift-site-api-key': apiKey },
+      next: { revalidate: MAKESWIFT_REVALIDATE_TARGET || 3600 },
+    });
+
+    if (!localesRes.ok) {
+      return [];
+    }
+
+    const localesData = await localesRes.json();
+
+    if (Array.isArray(localesData?.data)) {
+      return localesData.data.map((l: { locale: string }) => l.locale);
+    }
+
+    return [];
+  } catch {
+    return [];
+  }
+});
+
 async function normalizeLocale(locale: string): Promise<string | undefined> {
   const { defaultLocale } = await getLocaleRouting();
 
-  return locale === defaultLocale ? undefined : locale;
+  if (locale.toLowerCase() === defaultLocale.toLowerCase()) {
+    return undefined;
+  }
+
+  const supportedLocales = await getMakeswiftSupportedLocales();
+
+  if (supportedLocales.length > 0) {
+    const matchedLocale = supportedLocales.find(
+      (supported) => supported.toLowerCase() === locale.toLowerCase(),
+    );
+
+    // If the locale is configured in Makeswift, return its canonical name;
+    // otherwise fallback to undefined so Makeswift serves the default locale cleanly.
+    return matchedLocale;
+  }
+
+  return locale;
 }
 
 export async function getMakeswiftPageMetadata({ path, locale }: { path: string; locale: string }) {
