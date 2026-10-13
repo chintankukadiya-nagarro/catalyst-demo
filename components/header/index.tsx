@@ -22,6 +22,45 @@ import { switchCurrency } from './_actions/switch-currency';
 import { switchLocale } from './_actions/switch-locale';
 import { CurrencyCode, HeaderFragment, HeaderLinksFragment } from './fragment';
 
+const LOCALE_DISPLAY_NAMES: Record<string, string> = {
+  en: 'English',
+  'en-US': 'English (US)',
+  'en-GB': 'English (UK)',
+  ja: '日本語',
+  'ja-JP': '日本語',
+  'ja-jp': '日本語',
+  fr: 'Français',
+  de: 'Deutsch',
+  es: 'Español',
+  it: 'Italiano',
+  nl: 'Nederlands',
+  da: 'Dansk',
+  sv: 'Svenska',
+  pt: 'Português',
+  'pt-BR': 'Português (Brasil)',
+  pl: 'Polski',
+  no: 'Norsk',
+};
+
+const getLocaleDisplayName = (code: string): string => {
+  if (LOCALE_DISPLAY_NAMES[code]) {
+    return LOCALE_DISPLAY_NAMES[code];
+  }
+
+  try {
+    const displayNames = new Intl.DisplayNames([code], { type: 'language' });
+    const name = displayNames.of(code.split('-')[0]);
+
+    if (name) {
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+  } catch {
+    // fallback
+  }
+
+  return code.toLocaleUpperCase();
+};
+
 const GetCartCountQuery = graphql(`
   query GetCartCountQuery($cartId: String) {
     site {
@@ -87,7 +126,7 @@ export const Header = async () => {
 
   const locales = localeRouting.locales.map((enabledLocales) => ({
     id: enabledLocales,
-    label: enabledLocales.toLocaleUpperCase(),
+    label: getLocaleDisplayName(enabledLocales),
   }));
 
   const currencies = data.currencies.edges
