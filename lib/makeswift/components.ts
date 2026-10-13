@@ -19,3 +19,4 @@ import './components/peek-slideshow/register';
 import './components/slideshow/register';
 import './components/sticky-sidebar/register';
 import './components/tab-carousel/register';
+import './components/spotlight-brands/register';
