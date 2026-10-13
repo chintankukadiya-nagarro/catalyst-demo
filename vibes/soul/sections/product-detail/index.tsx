@@ -29,6 +29,7 @@ import {
 import { ProductCareGuide } from './product-care-guide';
 import { ProductCategoryHierarchy, ProductCategoryHierarchyItem } from './product-category-hierarchy';
 import { GuideLinkItem, ProductGuideLinks } from './product-guide-links';
+import { ProductStaffVoice, type StaffVoiceLinkItem } from './product-staff-voice';
 import { RatingLink } from './rating-link';
 import { Field } from './schema';
 
@@ -80,6 +81,13 @@ export interface CareGuideData {
   links?: GuideLinkItem[];
 }
 
+export interface StaffNoteData {
+  title?: string;
+  content?: string;
+  html?: string;
+  links?: StaffVoiceLinkItem[];
+}
+
 export interface ProductDetailProps<F extends Field> {
   breadcrumbs?: Streamable<Breadcrumb[]>;
   promotionCallouts?: Streamable<Array<{ id: string; text: string }>>;
@@ -109,6 +117,8 @@ export interface ProductDetailProps<F extends Field> {
   recaptchaSiteKey?: string;
   /** Care guide data from product custom fields. Falls back to defaults when absent. */
   careGuideData?: Streamable<CareGuideData | null>;
+  /** Staff voice / staff note data from product custom fields or editorial defaults. */
+  staffNoteData?: Streamable<StaffNoteData | null>;
 }
 
 // eslint-disable-next-line valid-jsdoc
@@ -154,6 +164,7 @@ export function ProductDetail<F extends Field>({
   loadMoreImagesAction,
   recaptchaSiteKey,
   careGuideData: streamableCareGuideData,
+  staffNoteData: streamableStaffNoteData,
 }: ProductDetailProps<F>) {
   return (
     <section className="@container">
@@ -386,27 +397,35 @@ export function ProductDetail<F extends Field>({
                     </Stream>
                   </div>
 
-                  <Stream
-                    fallback={
-                      <div className="border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] pt-6">
-                        <ProductCareGuide />
-                      </div>
+                  <Stream fallback={null} value={streamableStaffNoteData}>
+                    {(staffNote) =>
+                      staffNote ? (
+                        <ProductStaffVoice
+                          content={staffNote.content}
+                          html={staffNote.html}
+                          links={staffNote.links}
+                          title={staffNote.title}
+                        />
+                      ) : null
                     }
-                    value={streamableCareGuideData}
-                  >
-                    {(data) => (
-                      <>
-                        <div className="border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] pt-6">
-                          <ProductCareGuide
-                            careInstructions={data?.careGuide.careInstructions}
-                            title={data?.careGuide.title}
-                            washNotice={data?.careGuide.washNotice}
-                          />
-                        </div>
+                  </Stream>
 
-                        <ProductGuideLinks links={data?.links} />
-                      </>
-                    )}
+                  <Stream fallback={null} value={streamableCareGuideData}>
+                    {(data) =>
+                      data ? (
+                        <>
+                          <div className="border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] pt-6">
+                            <ProductCareGuide
+                              careInstructions={data.careGuide.careInstructions}
+                              title={data.careGuide.title}
+                              washNotice={data.careGuide.washNotice}
+                            />
+                          </div>
+
+                          <ProductGuideLinks links={data.links} />
+                        </>
+                      ) : null
+                    }
                   </Stream>
 
                   <h2 className="sr-only">{additionalInformationTitle}</h2>
