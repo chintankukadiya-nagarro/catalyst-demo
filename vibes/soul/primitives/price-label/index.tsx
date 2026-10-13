@@ -89,10 +89,19 @@ export function PriceLabel({ className, colorScheme = 'light', price }: Props) {
   }
 
   const tax: 'inc' | 'ex' = mode === 'EX' ? 'ex' : 'inc';
+  const includingTaxLabel = t('includingTax');
+  const includingTaxTooltip = t('includingTaxFull');
 
   return (
     <span className={clsx('block font-semibold', baseColorClass, className)}>
       <PriceLine colorScheme={colorScheme} price={price} t={t} tax={tax} />
+      {mode === 'INC' && (
+        <span className="ml-1.5 inline-block text-sm font-normal text-contrast-500">
+          <abbr className="no-underline" title={includingTaxTooltip}>
+            {includingTaxLabel}
+          </abbr>
+        </span>
+      )}
     </span>
   );
 }

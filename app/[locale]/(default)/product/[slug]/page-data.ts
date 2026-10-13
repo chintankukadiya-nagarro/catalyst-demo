@@ -212,6 +212,14 @@ const ProductQuery = graphql(
               }
             }
           }
+          customFields {
+            edges {
+              node {
+                name
+                value
+              }
+            }
+          }
           ...ProductOptionsFragment
         }
       }

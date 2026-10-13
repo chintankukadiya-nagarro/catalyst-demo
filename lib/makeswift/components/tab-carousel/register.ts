@@ -112,5 +112,9 @@ runtime.registerComponent(MSTabCarousel, {
       ],
       defaultValue: '1:1',
     }),
+    hideOverflow: Checkbox({
+      label: 'Hide overflow',
+      defaultValue: true,
+    }),
   },
 });

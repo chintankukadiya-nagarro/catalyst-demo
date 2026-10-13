@@ -54,6 +54,14 @@ export const ProductCardFragment = graphql(
           }
         }
       }
+      customFields {
+        edges {
+          node {
+            name
+            value
+          }
+        }
+      }
       ...PricingFragment
     }
   `,

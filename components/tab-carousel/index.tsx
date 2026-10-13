@@ -29,6 +29,7 @@ export interface TabCarouselProps {
   isLoading?: boolean;
   showNumbers?: boolean;
   aspectRatio?: '5:6' | '3:4' | '1:1';
+  hideOverflow?: boolean;
   className?: string;
 }
 
@@ -133,6 +134,7 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
     isLoading = false,
     showNumbers = true,
     aspectRatio = '1:1',
+    hideOverflow = true,
     className,
   },
   ref,
@@ -178,7 +180,11 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
 
   return (
     <section
-      className={clsx('w-full overflow-hidden bg-white py-12 sm:py-16 md:py-20', className)}
+      className={clsx(
+        'w-full bg-white py-12 sm:py-16 md:py-20',
+        hideOverflow && 'overflow-hidden',
+        className,
+      )}
       ref={ref}
     >
       {/* Header Container: Title, Subtitle, and Top-Right Chevron Navigation */}

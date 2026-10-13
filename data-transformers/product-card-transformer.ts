@@ -68,6 +68,12 @@ export const singleProductCardTransformer = (
       'variants' in product
         ? getInventoryMessage(product, outOfStockMessage, showBackorderMessage)
         : undefined,
+    badge:
+      'customFields' in product && product.customFields
+        ? removeEdgesAndNodes(product.customFields).find(
+            (field) => field.name.toLowerCase() === 'badge',
+          )?.value
+        : undefined,
     promotions:
       'featuredPromotions' in product
         ? removeEdgesAndNodes(product.featuredPromotions).map((p) => ({

@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 
 import * as Skeleton from '@/vibes/soul/primitives/skeleton';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Image } from '~/components/image';
 
 export type ProductGalleryLoadMoreAction = (
@@ -96,6 +97,55 @@ export function ProductGallery({
     },
     [emblaApi, emblaThumbsApi],
   );
+
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const scrollThumbsPrev = useCallback(() => {
+    if (!emblaThumbsApi) return;
+    if (typeof emblaThumbsApi.scrollPrev === 'function') {
+      emblaThumbsApi.scrollPrev();
+    } else {
+      const nextIdx = Math.max(0, selectedIndex - 1);
+      emblaThumbsApi.goTo(nextIdx);
+      if (emblaApi) emblaApi.goTo(nextIdx);
+    }
+  }, [emblaThumbsApi, emblaApi, selectedIndex]);
+
+  const scrollThumbsNext = useCallback(() => {
+    if (!emblaThumbsApi) return;
+    if (typeof emblaThumbsApi.scrollNext === 'function') {
+      emblaThumbsApi.scrollNext();
+    } else {
+      const nextIdx = Math.min(images.length - 1, selectedIndex + 1);
+      emblaThumbsApi.goTo(nextIdx);
+      if (emblaApi) emblaApi.goTo(nextIdx);
+    }
+  }, [emblaThumbsApi, emblaApi, selectedIndex, images.length]);
+
+  const onThumbSelect = useCallback(() => {
+    setCanScrollPrev(selectedIndex > 0);
+    setCanScrollNext(selectedIndex < images.length - 1);
+  }, [selectedIndex, images.length]);
+
+  useEffect(() => {
+    onThumbSelect();
+  }, [onThumbSelect]);
+
+  useEffect(() => {
+    if (!emblaThumbsApi) return;
+    onThumbSelect();
+    if (typeof emblaThumbsApi.on === 'function') {
+      emblaThumbsApi.on('select', onThumbSelect);
+      emblaThumbsApi.on('reInit', onThumbSelect);
+    }
+    return () => {
+      if (typeof emblaThumbsApi.off === 'function') {
+        emblaThumbsApi.off('select', onThumbSelect);
+        emblaThumbsApi.off('reInit', onThumbSelect);
+      }
+    };
+  }, [emblaThumbsApi, onThumbSelect]);
 
   const onSelect = useCallback(() => {
     if (!emblaApi || !emblaThumbsApi) return;
@@ -331,17 +381,30 @@ export function ProductGallery({
         </div>
       )}
 
-      <div className="flex max-w-full shrink-0 flex-col gap-2">
-        <div className="overflow-hidden" ref={emblaThumbsRef}>
-          <div className="flex flex-row gap-2 p-1">
+      <div className="relative flex max-w-full shrink-0 items-center gap-2">
+        {/* Left Slider Arrow Button */}
+        <button
+          aria-label="Previous thumbnails"
+          className={clsx(
+            'absolute -left-3.5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition-all hover:bg-gray-50 focus:outline-none',
+            canScrollPrev ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none',
+          )}
+          onClick={scrollThumbsPrev}
+          type="button"
+        >
+          <ChevronLeft className="text-gray-700" size={18} strokeWidth={1.5} />
+        </button>
+
+        <div className="w-full overflow-hidden" ref={emblaThumbsRef}>
+          <div className="flex flex-row gap-3 py-2 px-1">
             {images.map((image, index) => (
               <button
                 aria-label={`${thumbnailLabel} ${index + 1}`}
                 className={clsx(
-                  'relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--product-gallery-focus,hsl(var(--primary)))] focus-visible:ring-offset-2 @md:h-16 @md:w-16',
+                  'relative h-20 w-16 shrink-0 overflow-hidden rounded-md border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--product-gallery-focus,hsl(var(--primary)))] focus-visible:ring-offset-2 @md:h-24 @md:w-20',
                   index === selectedIndex
-                    ? 'border-[var(--product-gallery-image-border-active,hsl(var(--foreground)))]'
-                    : 'border-transparent',
+                    ? 'border-black ring-1 ring-black'
+                    : 'border-gray-200 hover:border-gray-400',
                 )}
                 key={index}
                 onClick={() => onThumbClick(index)}
@@ -349,31 +412,42 @@ export function ProductGallery({
               >
                 <div
                   className={clsx(
-                    index === selectedIndex ? 'opacity-100' : 'opacity-50',
-                    'transition-all duration-300 hover:opacity-100',
+                    index === selectedIndex ? 'opacity-100' : 'opacity-70',
+                    'h-full w-full transition-all duration-300 hover:opacity-100',
                   )}
                 >
                   <Image
                     alt={image.alt}
-                    className="bg-[var(--product-gallery-image-background,hsl(var(--contrast-100)))] object-cover"
+                    className="h-full w-full bg-[var(--product-gallery-image-background,hsl(var(--contrast-100)))] object-contain p-0.5"
                     fill
-                    sizes="(min-width: 28rem) 4rem, 3rem"
+                    sizes="(min-width: 28rem) 5rem, 4rem"
                     src={image.src}
                   />
                 </div>
               </button>
             ))}
             {hasMoreToLoad && (
-              <div className="flex animate-pulse gap-2">
-                <Skeleton.Box className="h-12 w-12 shrink-0 rounded-lg @md:h-16 @md:w-16" />
-                <Skeleton.Box className="h-12 w-12 shrink-0 rounded-lg @md:h-16 @md:w-16" />
-                <Skeleton.Box className="h-12 w-12 shrink-0 rounded-lg @md:h-16 @md:w-16" />
-                <Skeleton.Box className="h-12 w-12 shrink-0 rounded-lg @md:h-16 @md:w-16" />
-                <Skeleton.Box className="h-12 w-12 shrink-0 rounded-lg @md:h-16 @md:w-16" />
+              <div className="flex animate-pulse gap-3">
+                <Skeleton.Box className="h-20 w-16 shrink-0 rounded-md @md:h-24 @md:w-20" />
+                <Skeleton.Box className="h-20 w-16 shrink-0 rounded-md @md:h-24 @md:w-20" />
+                <Skeleton.Box className="h-20 w-16 shrink-0 rounded-md @md:h-24 @md:w-20" />
               </div>
             )}
           </div>
         </div>
+
+        {/* Right Slider Arrow Button */}
+        <button
+          aria-label="Next thumbnails"
+          className={clsx(
+            'absolute -right-3.5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition-all hover:bg-gray-50 focus:outline-none',
+            canScrollNext ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none',
+          )}
+          onClick={scrollThumbsNext}
+          type="button"
+        >
+          <ChevronRight className="text-gray-700" size={18} strokeWidth={1.5} />
+        </button>
       </div>
     </div>
   );
