@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { Order, OrderList } from '@/vibes/soul/sections/order-list';
 import { ordersTransformer } from '~/data-transformers/orders-transformer';
 import { defaultPageInfo, pageInfoTransformer } from '~/data-transformers/page-info-transformer';
@@ -49,16 +50,25 @@ export default async function Orders({ params, searchParams }: Props) {
   const { before, after } = await searchParams;
   const t = await getTranslations('Account.Orders');
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Your Account', href: '/account/orders' },
+    { label: t('title'), href: '#' },
+  ];
+
   return (
-    <OrderList
-      emptyStateActionLabel={t('EmptyState.cta')}
-      emptyStateTitle={t('EmptyState.title')}
-      orderNumberLabel={t('orderNumber')}
-      orders={getOrders(after, before)}
-      paginationInfo={getPaginationInfo(after, before)}
-      title={t('title')}
-      totalLabel={t('totalPrice')}
-      viewDetailsLabel={t('viewDetails')}
-    />
+    <>
+      <Breadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
+      <OrderList
+        emptyStateActionLabel={t('EmptyState.cta')}
+        emptyStateTitle={t('EmptyState.title')}
+        orderNumberLabel={t('orderNumber')}
+        orders={getOrders(after, before)}
+        paginationInfo={getPaginationInfo(after, before)}
+        title={t('title')}
+        totalLabel={t('totalPrice')}
+        viewDetailsLabel={t('viewDetails')}
+      />
+    </>
   );
 }

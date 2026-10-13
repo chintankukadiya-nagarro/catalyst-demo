@@ -31,6 +31,10 @@ import { useFormStatus } from 'react-dom';
 import { FormStatus } from '@/vibes/soul/form/form-status';
 import { Stream, Streamable } from '@/vibes/soul/lib/streamable';
 import { Button } from '@/vibes/soul/primitives/button';
+import {
+  type EditorialMenuOverlayState,
+  emptyEditorialMenuOverlayState,
+} from '@/vibes/soul/primitives/editorial-menu-overlay';
 import { Logo } from '@/vibes/soul/primitives/logo';
 import { Price } from '@/vibes/soul/primitives/price-label';
 import { ProductCard } from '@/vibes/soul/primitives/product-card';
@@ -39,6 +43,7 @@ import { usePathname, useRouter } from '~/i18n/routing';
 import { useSearch } from '~/lib/search';
 
 import { getLocalizedPathname } from './_actions/localized-pathname';
+import { EditorialMenuFlyout } from './editorial-menu-trigger';
 
 interface Link {
   label: string;
@@ -98,13 +103,22 @@ type SearchAction<S extends SearchResult> = Action<
   FormData
 >;
 
+interface SecondaryNavItem {
+  key?: string;
+  label: string;
+  href: string;
+}
+
 interface Props<S extends SearchResult> {
   className?: string;
   isFloating?: boolean;
+  layoutVariant?: 'default' | 'editorial';
   accountHref: string;
   cartCount?: Streamable<number | null>;
   cartHref: string;
   links: Streamable<Link[]>;
+  primaryLinks?: Streamable<Link[]>;
+  secondaryLinks?: Streamable<SecondaryNavItem[]>;
   linksPosition?: 'center' | 'left' | 'right';
   locales?: Locale[];
   activeLocaleId?: string;
@@ -134,12 +148,41 @@ interface Props<S extends SearchResult> {
   giftCertificatesLabel?: string;
   giftCertificatesHref: string;
   giftCertificatesEnabled?: Streamable<boolean>;
+  menuOverlayState?: EditorialMenuOverlayState;
 }
 
 const MobileMenuButton = forwardRef<
   React.ComponentRef<'button'>,
-  { open: boolean } & React.ComponentPropsWithoutRef<'button'>
->(({ open, className, ...rest }, ref) => {
+  { open: boolean; variant?: 'default' | 'editorial' } & React.ComponentPropsWithoutRef<'button'>
+>(({ open, className, variant = 'default', ...rest }, ref) => {
+  if (variant === 'editorial') {
+    return (
+      <button
+        {...rest}
+        className={clsx(
+          'flex h-9 w-10 shrink-0 items-center justify-center outline-none ring-[var(--nav-focus,hsl(var(--primary)))] focus-visible:ring-2',
+          className,
+        )}
+        ref={ref}
+      >
+        {open ? (
+          <svg aria-hidden className="h-5 w-5" fill="none" viewBox="0 0 20 20">
+            <path d="M4 3L16 15M16 3L4 15" stroke="currentColor" strokeWidth="1" />
+          </svg>
+        ) : (
+          <svg aria-hidden className="h-5 w-5" viewBox="0 0 20 20">
+            <path
+              clipRule="evenodd"
+              d="M18.04 3.84H2V2.6H18.04V3.84ZM18.04 10.12H2V8.88H18.04V10.12ZM18.04 16.2H2V14.96H18.04V16.2Z"
+              fill="currentColor"
+              fillRule="evenodd"
+            />
+          </svg>
+        )}
+      </button>
+    );
+  }
+
   return (
     <button
       {...rest}
@@ -197,6 +240,68 @@ MobileMenuButton.displayName = 'MobileMenuButton';
 
 const navGroupClassName =
   'block rounded-lg bg-[var(--nav-group-background,transparent)] px-3 py-2 font-[family-name:var(--nav-group-font-family,var(--font-family-body))] font-medium text-[var(--nav-group-text,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-group-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-group-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2';
+
+const defaultPrimaryLinkClassName =
+  'hidden items-center whitespace-nowrap rounded-xl bg-[var(--nav-link-background,transparent)] p-2.5 font-[family-name:var(--nav-link-font-family,var(--font-family-body))] text-sm font-medium text-[var(--nav-link-text,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors duration-200 hover:bg-[var(--nav-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2 @4xl:inline-flex';
+
+const editorialPrimaryLinkClassName =
+  'hidden items-center whitespace-nowrap px-2 py-1 font-[family-name:var(--nav-link-font-family,var(--font-family-heading))] text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--nav-link-text,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-opacity hover:opacity-60 focus-visible:outline-0 focus-visible:ring-2 @4xl:inline-flex';
+
+const editorialSecondaryLinkClassName =
+  'inline-flex items-center whitespace-nowrap px-2 py-0.5 font-[family-name:var(--nav-sub-link-font-family,var(--font-family-body))] text-xs font-normal text-[var(--nav-sub-link-text,hsl(var(--contrast-500)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:text-[var(--nav-sub-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2';
+
+function PrimaryNavMenuItems({ isEditorial, links }: { isEditorial: boolean; links: Link[] }) {
+  const linkClassName = isEditorial ? editorialPrimaryLinkClassName : defaultPrimaryLinkClassName;
+  const menuContentClassName = isEditorial
+    ? 'rounded-sm bg-[var(--nav-menu-background,hsl(var(--background)))] shadow-md ring-1 ring-[var(--nav-menu-border,hsl(var(--foreground)/8%))]'
+    : 'rounded-2xl bg-[var(--nav-menu-background,hsl(var(--background)))] shadow-xl ring-1 ring-[var(--nav-menu-border,hsl(var(--foreground)/5%))]';
+  const groupHeadingClassName = isEditorial
+    ? clsx(navGroupClassName, 'text-[10px] uppercase tracking-[0.15em]')
+    : navGroupClassName;
+
+  return links.map((item, i) => (
+    <NavigationMenu.Item key={i} value={i.toString()}>
+      <NavigationMenu.Trigger asChild>
+        <Link className={linkClassName} href={item.href}>
+          {item.label}
+        </Link>
+      </NavigationMenu.Trigger>
+      {item.groups != null && item.groups.length > 0 && (
+        <NavigationMenu.Content className={menuContentClassName}>
+          <div className="m-auto grid w-full max-w-screen-lg grid-cols-5 justify-center gap-5 px-5 pb-8 pt-5">
+            {item.groups.map((group, columnIndex) => (
+              <ul className="flex flex-col" key={columnIndex}>
+                {group.label != null && group.label !== '' && (
+                  <li>
+                    {group.href != null && group.href !== '' ? (
+                      <Link className={groupHeadingClassName} href={group.href}>
+                        {group.label}
+                      </Link>
+                    ) : (
+                      <span className={groupHeadingClassName}>{group.label}</span>
+                    )}
+                  </li>
+                )}
+
+                {group.links.map((link, idx) => (
+                  <li key={idx}>
+                    <Link
+                      className="block rounded-lg bg-[var(--nav-sub-link-background,transparent)] px-3 py-1.5 font-[family-name:var(--nav-sub-link-font-family,var(--font-family-body))] text-sm font-medium text-[var(--nav-sub-link-text,hsl(var(--contrast-500)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-sub-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-sub-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2"
+                      href={link.href}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ))}
+          </div>
+        </NavigationMenu.Content>
+      )}
+    </NavigationMenu.Item>
+  ));
+}
+
 const navButtonClassName =
   'relative rounded-lg bg-[var(--nav-button-background,transparent)] p-1.5 text-[var(--nav-button-icon,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors focus-visible:outline-0 focus-visible:ring-2 @4xl:hover:bg-[var(--nav-button-background-hover,hsl(var(--contrast-100)))] @4xl:hover:text-[var(--nav-button-icon-hover,hsl(var(--foreground)))]';
 
@@ -268,14 +373,41 @@ const navButtonClassName =
  * }
  * ```
  */
-export const Navigation = forwardRef(function Navigation<S extends SearchResult>(
+/**
+ * @param {boolean} isEditorial Whether the editorial header layout is active.
+ * @param {boolean} isFloating Whether the header is pinned after scroll.
+ * @returns {string} Tailwind classes for the navigation shell container.
+ */
+function getNavigationShellClassName(isEditorial: boolean, isFloating: boolean): string {
+  if (isEditorial) {
+    return clsx(
+      'relative mx-auto flex h-[61px] w-full max-w-[1280px] items-center justify-between gap-8 bg-[var(--nav-background,hsl(var(--background)))] px-6 @4xl:px-[30px]',
+      isFloating && 'border-b border-[var(--nav-floating-border,hsl(var(--foreground)/10%))]',
+    );
+  }
+
+  if (isFloating) {
+    return clsx(
+      'flex items-center justify-between gap-1 bg-[var(--nav-background,hsl(var(--background)))] py-2 pl-3 pr-2 transition-shadow @4xl:rounded-2xl @4xl:px-2 @4xl:pl-6 @4xl:pr-2.5 shadow-xl ring-1 ring-[var(--nav-floating-border,hsl(var(--foreground)/10%))]',
+    );
+  }
+
+  return clsx(
+    'flex items-center justify-between gap-1 bg-[var(--nav-background,hsl(var(--background)))] py-2 pl-3 pr-2 transition-shadow shadow-none ring-0 @4xl:rounded-2xl @4xl:px-2 @4xl:pl-6 @4xl:pr-2.5',
+  );
+}
+
+export const Navigation = forwardRef(function NavigationBar<S extends SearchResult>(
   {
     className,
     isFloating = false,
     cartHref,
     cartCount: streamableCartCount,
     accountHref,
+    layoutVariant = 'default',
     links: streamableLinks,
+    primaryLinks: streamablePrimaryLinks,
+    secondaryLinks: streamableSecondaryNavLinks,
     logo: streamableLogo,
     logoHref = '/',
     logoLabel = 'Home',
@@ -305,6 +437,7 @@ export const Navigation = forwardRef(function Navigation<S extends SearchResult>
     giftCertificatesLabel = 'Gift Certificates',
     giftCertificatesHref,
     giftCertificatesEnabled: streamableGiftCertificatesEnabled,
+    menuOverlayState = emptyEditorialMenuOverlayState,
   }: Props<S>,
   ref: Ref<HTMLDivElement>,
 ) {
@@ -318,137 +451,149 @@ export const Navigation = forwardRef(function Navigation<S extends SearchResult>
     setIsSearchOpen(false);
   }, [pathname, setIsSearchOpen]);
 
+  const isEditorial = layoutVariant === 'editorial';
+
   useEffect(() => {
     function handleScroll() {
       setIsSearchOpen(false);
-      setIsMobileMenuOpen(false);
+
+      if (!isEditorial) {
+        setIsMobileMenuOpen(false);
+      }
     }
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [setIsSearchOpen]);
+  }, [isEditorial, setIsSearchOpen]);
+
+  const streamablePrimaryNavLinks = streamablePrimaryLinks ?? streamableLinks;
 
   return (
     <NavigationMenu.Root
-      className={clsx('relative mx-auto w-full max-w-screen-2xl @container', className)}
+      className={clsx(
+        'relative mx-auto w-full @container',
+        isEditorial ? 'max-w-none' : 'max-w-screen-2xl',
+        className,
+      )}
       delayDuration={0}
       onValueChange={() => setIsSearchOpen(false)}
       ref={ref}
     >
-      <div
-        className={clsx(
-          'flex items-center justify-between gap-1 bg-[var(--nav-background,hsl(var(--background)))] py-2 pl-3 pr-2 transition-shadow @4xl:rounded-2xl @4xl:px-2 @4xl:pl-6 @4xl:pr-2.5',
-          isFloating
-            ? 'shadow-xl ring-1 ring-[var(--nav-floating-border,hsl(var(--foreground)/10%))]'
-            : 'shadow-none ring-0',
-        )}
-      >
-        {/* Mobile Menu */}
-        <Popover.Root onOpenChange={setIsMobileMenuOpen} open={isMobileMenuOpen}>
-          <Popover.Anchor className="absolute left-0 right-0 top-full" />
-          <Popover.Trigger asChild>
-            <MobileMenuButton
-              aria-label={mobileMenuTriggerLabel}
-              className="mr-1 @4xl:hidden"
-              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-              open={isMobileMenuOpen}
-            />
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content className="max-h-[calc(var(--radix-popover-content-available-height)-8px)] w-[var(--radix-popper-anchor-width)] @container data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-              <div className="max-h-[inherit] divide-y divide-[var(--nav-mobile-divider,hsl(var(--contrast-100)))] overflow-y-auto bg-[var(--nav-mobile-background,hsl(var(--background)))]">
-                <Stream
-                  fallback={
-                    <ul className="flex animate-pulse flex-col gap-4 p-5 @4xl:gap-2 @4xl:p-5">
-                      <li>
-                        <span className="block h-4 w-10 rounded-md bg-contrast-100" />
-                      </li>
-                      <li>
-                        <span className="block h-4 w-14 rounded-md bg-contrast-100" />
-                      </li>
-                      <li>
-                        <span className="block h-4 w-24 rounded-md bg-contrast-100" />
-                      </li>
-                      <li>
-                        <span className="block h-4 w-16 rounded-md bg-contrast-100" />
-                      </li>
-                    </ul>
-                  }
-                  value={streamableLinks}
-                >
-                  {(links) =>
-                    links.map((item, i) => (
-                      <ul className="flex flex-col p-2 @4xl:gap-2 @4xl:p-5" key={i}>
-                        {item.label !== '' && (
-                          <li>
-                            <Link
-                              className="block rounded-lg bg-[var(--nav-mobile-link-background,transparent)] px-3 py-2 font-[family-name:var(--nav-mobile-link-font-family,var(--font-family-body))] font-semibold text-[var(--nav-mobile-link-text,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-mobile-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-mobile-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2 @4xl:py-4"
-                              href={item.href}
-                            >
-                              {item.label}
-                            </Link>
-                          </li>
-                        )}
-                        {item.groups
-                          ?.flatMap((group) => group.links)
-                          .map((link, j) => (
-                            <li key={j}>
+      <div className={getNavigationShellClassName(isEditorial, isFloating)}>
+        {/* Mobile / editorial menu */}
+        {isEditorial ? (
+          <MobileMenuButton
+            aria-expanded={isMobileMenuOpen}
+            aria-label={mobileMenuTriggerLabel}
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            open={isMobileMenuOpen}
+            variant="editorial"
+          />
+        ) : (
+          <Popover.Root onOpenChange={setIsMobileMenuOpen} open={isMobileMenuOpen}>
+            <Popover.Anchor className="absolute left-0 right-0 top-full" />
+            <Popover.Trigger asChild>
+              <MobileMenuButton
+                aria-label={mobileMenuTriggerLabel}
+                className="mr-1 @4xl:hidden"
+                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                open={isMobileMenuOpen}
+              />
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content className="max-h-[calc(var(--radix-popover-content-available-height)-8px)] w-[var(--radix-popper-anchor-width)] @container data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+                <div className="max-h-[inherit] divide-y divide-[var(--nav-mobile-divider,hsl(var(--contrast-100)))] overflow-y-auto bg-[var(--nav-mobile-background,hsl(var(--background)))]">
+                  <Stream
+                    fallback={
+                      <ul className="flex animate-pulse flex-col gap-4 p-5 @4xl:gap-2 @4xl:p-5">
+                        <li>
+                          <span className="block h-4 w-10 rounded-md bg-contrast-100" />
+                        </li>
+                        <li>
+                          <span className="block h-4 w-14 rounded-md bg-contrast-100" />
+                        </li>
+                        <li>
+                          <span className="block h-4 w-24 rounded-md bg-contrast-100" />
+                        </li>
+                        <li>
+                          <span className="block h-4 w-16 rounded-md bg-contrast-100" />
+                        </li>
+                      </ul>
+                    }
+                    value={streamablePrimaryNavLinks}
+                  >
+                    {(links) =>
+                      links.map((item, i) => (
+                        <ul className="flex flex-col p-2 @4xl:gap-2 @4xl:p-5" key={i}>
+                          {item.label !== '' && (
+                            <li>
                               <Link
-                                className="block rounded-lg bg-[var(--nav-mobile-sub-link-background,transparent)] px-3 py-2 font-[family-name:var(--nav-mobile-sub-link-font-family,var(--font-family-body))] text-sm font-medium text-[var(--nav-mobile-sub-link-text,hsl(var(--contrast-500)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-mobile-sub-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-mobile-sub-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2 @4xl:py-4"
-                                href={link.href}
+                                className="block rounded-lg bg-[var(--nav-mobile-link-background,transparent)] px-3 py-2 font-[family-name:var(--nav-mobile-link-font-family,var(--font-family-body))] font-semibold text-[var(--nav-mobile-link-text,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-mobile-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-mobile-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2 @4xl:py-4"
+                                href={item.href}
                               >
-                                {link.label}
+                                {item.label}
                               </Link>
                             </li>
-                          ))}
-                      </ul>
-                    ))
-                  }
-                </Stream>
-                {/* Mobile Locale / Currency Dropdown */}
-                {locales && locales.length > 1 && streamableCurrencies && (
-                  <div className="p-2 @4xl:p-5">
-                    <div className="flex items-center px-3 py-1 @4xl:py-2">
-                      {/* Locale / Language Dropdown */}
-                      {locales.length > 1 ? (
-                        <LocaleSwitcher
-                          action={localeAction}
-                          activeLocaleId={activeLocaleId}
-                          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                          locales={locales as [Locale, Locale, ...Locale[]]}
-                        />
-                      ) : null}
-
-                      {/* Currency Dropdown */}
-                      <Stream
-                        fallback={null}
-                        value={Streamable.all([streamableCurrencies, streamableActiveCurrencyId])}
-                      >
-                        {([currencies, activeCurrencyId]) =>
-                          currencies.length > 1 && currencyAction ? (
-                            <CurrencyForm
-                              action={currencyAction}
-                              activeCurrencyId={activeCurrencyId}
-                              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                              currencies={currencies as [Currency, ...Currency[]]}
-                            />
-                          ) : null
-                        }
-                      </Stream>
+                          )}
+                          {item.groups
+                            ?.flatMap((group) => group.links)
+                            .map((link, j) => (
+                              <li key={j}>
+                                <Link
+                                  className="block rounded-lg bg-[var(--nav-mobile-sub-link-background,transparent)] px-3 py-2 font-[family-name:var(--nav-mobile-sub-link-font-family,var(--font-family-body))] text-sm font-medium text-[var(--nav-mobile-sub-link-text,hsl(var(--contrast-500)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-mobile-sub-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-mobile-sub-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2 @4xl:py-4"
+                                  href={link.href}
+                                >
+                                  {link.label}
+                                </Link>
+                              </li>
+                            ))}
+                        </ul>
+                      ))
+                    }
+                  </Stream>
+                  {locales && locales.length > 1 && streamableCurrencies && (
+                    <div className="p-2 @4xl:p-5">
+                      <div className="flex items-center px-3 py-1 @4xl:py-2">
+                        {locales.length > 1 ? (
+                          <LocaleSwitcher
+                            action={localeAction}
+                            activeLocaleId={activeLocaleId}
+                            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                            locales={locales as [Locale, Locale, ...Locale[]]}
+                          />
+                        ) : null}
+                        <Stream
+                          fallback={null}
+                          value={Streamable.all([streamableCurrencies, streamableActiveCurrencyId])}
+                        >
+                          {([currencies, activeCurrencyId]) =>
+                            currencies.length > 1 && currencyAction ? (
+                              <CurrencyForm
+                                action={currencyAction}
+                                activeCurrencyId={activeCurrencyId}
+                                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                                currencies={currencies as [Currency, ...Currency[]]}
+                              />
+                            ) : null
+                          }
+                        </Stream>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
+                  )}
+                </div>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+        )}
 
         {/* Logo */}
         <div
           className={clsx(
             'flex items-center justify-start self-stretch',
-            linksPosition === 'center' ? 'flex-1' : 'flex-1 @4xl:flex-none',
+            isEditorial || linksPosition === 'center'
+              ? 'flex-none @4xl:flex-none'
+              : 'flex-1 @4xl:flex-none',
           )}
         >
           <Logo
@@ -472,91 +617,95 @@ export const Navigation = forwardRef(function Navigation<S extends SearchResult>
         </div>
 
         {/* Top Level Nav Links */}
-        <ul
-          className={clsx(
-            'hidden gap-1 @4xl:flex @4xl:flex-1',
-            {
-              left: '@4xl:justify-start',
-              center: '@4xl:justify-center',
-              right: '@4xl:justify-end',
-            }[linksPosition],
-          )}
-        >
-          <Stream
-            fallback={
-              <ul className="flex min-h-[41px] animate-pulse flex-row items-center @4xl:gap-6 @4xl:p-2.5">
-                <li>
-                  <span className="block h-4 w-10 rounded-md bg-contrast-100" />
-                </li>
-                <li>
-                  <span className="block h-4 w-14 rounded-md bg-contrast-100" />
-                </li>
-                <li>
-                  <span className="block h-4 w-24 rounded-md bg-contrast-100" />
-                </li>
-                <li>
-                  <span className="block h-4 w-16 rounded-md bg-contrast-100" />
-                </li>
-              </ul>
-            }
-            value={streamableLinks}
+        {isEditorial ? (
+          <div
+            className={clsx(
+              'hidden min-w-0 flex-1 items-center justify-center gap-4 @4xl:flex',
+              isMobileMenuOpen && 'invisible',
+            )}
           >
-            {(links) =>
-              links.map((item, i) => (
-                <NavigationMenu.Item key={i} value={i.toString()}>
-                  <NavigationMenu.Trigger asChild>
-                    <Link
-                      className="hidden items-center whitespace-nowrap rounded-xl bg-[var(--nav-link-background,transparent)] p-2.5 font-[family-name:var(--nav-link-font-family,var(--font-family-body))] text-sm font-medium text-[var(--nav-link-text,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors duration-200 hover:bg-[var(--nav-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2 @4xl:inline-flex"
-                      href={item.href}
-                    >
-                      {item.label}
-                    </Link>
-                  </NavigationMenu.Trigger>
-                  {item.groups != null && item.groups.length > 0 && (
-                    <NavigationMenu.Content className="rounded-2xl bg-[var(--nav-menu-background,hsl(var(--background)))] shadow-xl ring-1 ring-[var(--nav-menu-border,hsl(var(--foreground)/5%))]">
-                      <div className="m-auto grid w-full max-w-screen-lg grid-cols-5 justify-center gap-5 px-5 pb-8 pt-5">
-                        {item.groups.map((group, columnIndex) => (
-                          <ul className="flex flex-col" key={columnIndex}>
-                            {/* Second Level Links */}
-                            {group.label != null && group.label !== '' && (
-                              <li>
-                                {group.href != null && group.href !== '' ? (
-                                  <Link className={navGroupClassName} href={group.href}>
-                                    {group.label}
-                                  </Link>
-                                ) : (
-                                  <span className={navGroupClassName}>{group.label}</span>
-                                )}
-                              </li>
-                            )}
-
-                            {group.links.map((link, idx) => (
-                              // Third Level Links
-                              <li key={idx}>
-                                <Link
-                                  className="block rounded-lg bg-[var(--nav-sub-link-background,transparent)] px-3 py-1.5 font-[family-name:var(--nav-sub-link-font-family,var(--font-family-body))] text-sm font-medium text-[var(--nav-sub-link-text,hsl(var(--contrast-500)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-sub-link-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-sub-link-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2"
-                                  href={link.href}
-                                >
-                                  {link.label}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        ))}
-                      </div>
-                    </NavigationMenu.Content>
-                  )}
-                </NavigationMenu.Item>
-              ))
-            }
-          </Stream>
-        </ul>
+            <ul className="flex max-w-full flex-nowrap items-center justify-center gap-x-1">
+              <Stream
+                fallback={
+                  <li>
+                    <span className="block h-4 w-24 animate-pulse rounded-md bg-contrast-100" />
+                  </li>
+                }
+                value={streamablePrimaryNavLinks}
+              >
+                {(links) =>
+                  links.map((item, i) => (
+                    <li key={`${item.href}-${item.label}-${i}`}>
+                      <Link className={editorialPrimaryLinkClassName} href={item.href}>
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))
+                }
+              </Stream>
+            </ul>
+            {streamableSecondaryNavLinks != null && (
+              <>
+                <div
+                  aria-hidden
+                  className="hidden h-8 w-px shrink-0 bg-[var(--nav-menu-border,hsl(var(--foreground)/12%))] @4xl:block"
+                />
+                <ul className="flex max-w-full flex-nowrap items-center justify-center gap-x-3">
+                  <Stream fallback={null} value={streamableSecondaryNavLinks}>
+                    {(secondaryLinks) =>
+                      secondaryLinks.map((link) => (
+                        <li key={`${link.href}-${link.label}`}>
+                          <Link className={editorialSecondaryLinkClassName} href={link.href}>
+                            {link.label}
+                          </Link>
+                        </li>
+                      ))
+                    }
+                  </Stream>
+                </ul>
+              </>
+            )}
+          </div>
+        ) : (
+          <ul
+            className={clsx(
+              'hidden gap-1 @4xl:flex @4xl:flex-1',
+              {
+                left: '@4xl:justify-start',
+                center: '@4xl:justify-center',
+                right: '@4xl:justify-end',
+              }[linksPosition],
+            )}
+          >
+            <Stream
+              fallback={
+                <ul className="flex min-h-[41px] animate-pulse flex-row items-center @4xl:gap-6 @4xl:p-2.5">
+                  <li>
+                    <span className="block h-4 w-10 rounded-md bg-contrast-100" />
+                  </li>
+                  <li>
+                    <span className="block h-4 w-14 rounded-md bg-contrast-100" />
+                  </li>
+                  <li>
+                    <span className="block h-4 w-24 rounded-md bg-contrast-100" />
+                  </li>
+                  <li>
+                    <span className="block h-4 w-16 rounded-md bg-contrast-100" />
+                  </li>
+                </ul>
+              }
+              value={streamablePrimaryNavLinks}
+            >
+              {(links) => <PrimaryNavMenuItems isEditorial={false} links={links} />}
+            </Stream>
+          </ul>
+        )}
 
         {/* Icon Buttons */}
         <div
           className={clsx(
             'flex items-center justify-end gap-0.5 transition-colors duration-300',
-            linksPosition === 'center' ? 'flex-1' : 'flex-1 @4xl:flex-none',
+            isEditorial || linksPosition !== 'center' ? 'flex-none' : 'flex-1',
           )}
         >
           {searchAction ? (
@@ -615,22 +764,24 @@ export const Navigation = forwardRef(function Navigation<S extends SearchResult>
             </Stream>
           </Link>
 
-          <Stream fallback={null} value={streamableGiftCertificatesEnabled}>
-            {(giftCertificatesEnabled) =>
-              giftCertificatesEnabled && (
-                <Link
-                  aria-label={giftCertificatesLabel}
-                  className={navButtonClassName}
-                  href={giftCertificatesHref}
-                >
-                  <GiftIcon size={20} strokeWidth={1} />
-                </Link>
-              )
-            }
-          </Stream>
+          {!isEditorial ? (
+            <Stream fallback={null} value={streamableGiftCertificatesEnabled}>
+              {(giftCertificatesEnabled) =>
+                giftCertificatesEnabled && (
+                  <Link
+                    aria-label={giftCertificatesLabel}
+                    className={navButtonClassName}
+                    href={giftCertificatesHref}
+                  >
+                    <GiftIcon size={20} strokeWidth={1} />
+                  </Link>
+                )
+              }
+            </Stream>
+          ) : null}
 
           {/* Locale / Language Dropdown */}
-          {locales && locales.length > 1 ? (
+          {!isEditorial && locales && locales.length > 1 ? (
             <LocaleSwitcher
               action={localeAction}
               activeLocaleId={activeLocaleId}
@@ -641,25 +792,36 @@ export const Navigation = forwardRef(function Navigation<S extends SearchResult>
           ) : null}
 
           {/* Currency Dropdown */}
-          <Stream
-            fallback={null}
-            value={Streamable.all([streamableCurrencies, streamableActiveCurrencyId])}
-          >
-            {([currencies, activeCurrencyId]) =>
-              currencies && currencies.length > 1 && currencyAction ? (
-                <CurrencyForm
-                  action={currencyAction}
-                  activeCurrencyId={activeCurrencyId}
-                  className="hidden @4xl:block"
-                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                  currencies={currencies as [Currency, ...Currency[]]}
-                  switchCurrencyLabel={switchCurrencyLabel}
-                />
-              ) : null
-            }
-          </Stream>
+          {!isEditorial ? (
+            <Stream
+              fallback={null}
+              value={Streamable.all([streamableCurrencies, streamableActiveCurrencyId])}
+            >
+              {([currencies, activeCurrencyId]) =>
+                currencies && currencies.length > 1 && currencyAction ? (
+                  <CurrencyForm
+                    action={currencyAction}
+                    activeCurrencyId={activeCurrencyId}
+                    className="hidden @4xl:block"
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                    currencies={currencies as [Currency, ...Currency[]]}
+                    switchCurrencyLabel={switchCurrencyLabel}
+                  />
+                ) : null
+              }
+            </Stream>
+          ) : null}
         </div>
       </div>
+
+      {isEditorial ? (
+        <EditorialMenuFlyout
+          menuOverlayState={menuOverlayState}
+          onOpenChange={setIsMobileMenuOpen}
+          open={isMobileMenuOpen}
+          primaryLinks={streamablePrimaryNavLinks}
+        />
+      ) : null}
 
       <div className="perspective-[2000px] absolute left-0 right-0 top-full z-50 flex w-full justify-center">
         <NavigationMenu.Viewport className="relative mt-2 w-full data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95" />

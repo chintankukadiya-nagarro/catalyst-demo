@@ -15,6 +15,7 @@ export type Props = {
   pending?: boolean;
   placeholder?: string;
   label?: string;
+  extraLabel?: React.ReactNode;
   hideLabel?: boolean;
   variant?: 'round' | 'rectangle';
   options: Array<{ label: string; value: string }>;
@@ -68,6 +69,7 @@ export type Props = {
 export function Select({
   colorScheme = 'light',
   label,
+  extraLabel,
   hideLabel = false,
   name,
   pending = false,
@@ -87,15 +89,20 @@ export function Select({
 
   return (
     <div className={clsx('w-full', className)}>
-      {label !== undefined && label !== '' && (
-        <Label
-          className={clsx(hideLabel && 'sr-only', 'mb-2')}
-          colorScheme={colorScheme}
-          htmlFor={id}
-          required={required}
-        >
-          {label}
-        </Label>
+      {((label !== undefined && label !== '') || extraLabel != null) && (
+        <div className="mb-2 flex items-center justify-between gap-2">
+          {label !== undefined && label !== '' && (
+            <Label
+              className={clsx(hideLabel && 'sr-only')}
+              colorScheme={colorScheme}
+              htmlFor={id}
+              required={required}
+            >
+              {label}
+            </Label>
+          )}
+          {extraLabel}
+        </div>
       )}
       {/* Workaround for https://github.com/radix-ui/primitives/issues/3198, remove when fixed */}
       <input name={name} type="hidden" value={value} />

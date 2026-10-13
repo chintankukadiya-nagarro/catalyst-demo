@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Field } from '@/vibes/soul/form/dynamic-form/schema';
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { DynamicFormSection } from '@/vibes/soul/sections/dynamic-form-section';
 import {
   formFieldTransformer,
@@ -113,8 +114,17 @@ export default async function Register({ params }: Props) {
     .filter(exists)
     .filter(removeExlusiveOffersField);
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: t('heading'), href: '#' },
+  ];
+
   return (
-    <DynamicFormSection
+    <>
+      <div className="mx-auto w-full max-w-4xl px-4 pt-6 @xl:px-6">
+        <Breadcrumbs breadcrumbs={breadcrumbs} />
+      </div>
+      <DynamicFormSection
       action={registerCustomer}
       countriesWithoutStates={countriesWithoutStates}
       errorTranslations={{
@@ -166,5 +176,6 @@ export default async function Register({ params }: Props) {
       submitLabel={t('cta')}
       title={t('heading')}
     />
-  );
+  </>
+);
 }

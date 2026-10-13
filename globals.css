@@ -32,3 +32,167 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
+
+/* =====================================================================
+   ELLE SHOP look-alike theme (elleshop.jp)
+   ---------------------------------------------------------------------
+   Reference tokens pulled from img.elleshop.jp/web/default/es_css/*.css:
+     fonts   : Jost (UI/headings), Inter (body), Hiragino Kaku Gothic (JP)
+     colors  : #000 / #161616 text, #333 secondary, #ababab muted,
+               #ccc / #ddd borders, #f5f5f5 / #f0f0f0 surfaces,
+               #e50083 ELLE pink accent
+     shape   : border-radius 0 almost everywhere
+     tracking: 0.04em on labels / nav
+   `:root:root` (specificity 0,2,0) is used on purpose so these values win
+   over the inline <style data-makeswift="theme"> block that Makeswift
+   injects into <head>. Remove this block to go back to Makeswift control.
+   ===================================================================== */
+:root:root {
+  /* --- base palette (HSL triplets consumed by tailwind.config.js) --- */
+  --primary: 0 0% 9%;            /* #161616 */
+  --accent: 325 100% 45%;        /* #e50083 ELLE pink */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --contrast-100: 0 0% 96%;      /* #f5f5f5 */
+  --contrast-200: 0 0% 87%;      /* #ddd   */
+  --contrast-300: 0 0% 80%;      /* #ccc   */
+  --contrast-400: 0 0% 67%;      /* #ababab*/
+  --contrast-500: 0 0% 20%;      /* #333   */
+
+  /* --- fonts --- */
+  --font-family-heading: var(--font-family-jost), 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  --font-family-body: var(--font-family-inter), 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  --font-family-accent: var(--font-family-jost), sans-serif;
+  --font-family-mono: var(--font-family-jost), sans-serif;
+
+  /* --- buttons: black fill / white outline, square --- */
+  --button-primary-background: #161616;
+  --button-primary-background-hover: #000000;
+  --button-primary-foreground: #ffffff;
+  --button-primary-text: #ffffff;
+  --button-primary-border: #161616;
+  --button-secondary-background: #ffffff;
+  --button-secondary-background-hover: #f5f5f5;
+  --button-secondary-foreground: #161616;
+  --button-secondary-text: #161616;
+  --button-secondary-border: #161616;
+  --button-tertiary-background: #ffffff;
+  --button-tertiary-background-hover: #f5f5f5;
+  --button-tertiary-foreground: #161616;
+  --button-tertiary-text: #161616;
+  --button-tertiary-border: #cccccc;
+  --button-focus: #e50083;
+  --button-font-family: var(--font-family-jost), sans-serif;
+
+  /* --- header / navigation --- */
+  --nav-background: #ffffff;
+  --nav-link-text: #161616;
+  --nav-link-text-hover: #e50083;
+  --nav-link-background-hover: transparent;
+  --nav-link-font-family: var(--font-family-jost), sans-serif;
+  --nav-group-text: #161616;
+  --nav-group-text-hover: #e50083;
+  --nav-group-background-hover: transparent;
+  --nav-sub-link-text: #333333;
+  --nav-sub-link-text-hover: #e50083;
+  --nav-sub-link-background-hover: transparent;
+  --nav-menu-border: #dddddd;
+  --nav-floating-border: #dddddd;
+  --nav-cart-count-background: #e50083;
+  --nav-cart-count-text: #ffffff;
+  --nav-focus: #e50083;
+  --nav-search-border: #dddddd;
+
+  /* --- product card --- */
+  --product-card-border-radius: 0px;
+  --product-card-light-background: #f5f5f5;
+  --product-card-light-title: #161616;
+  --product-card-light-subtitle: #ababab;
+  --product-card-light-message: #e50083;
+  --product-card-focus: #e50083;
+  --card-border-radius: 0px;
+  --card-light-background: #f5f5f5;
+
+  /* --- price --- */
+  --price-light-text: #161616;
+  --price-light-sale-text: #e50083;
+
+  /* --- badges (新着 / 再入荷 style) --- */
+  --badge-primary-background: #161616;
+  --badge-text: #ffffff;
+  --badge-font-family: var(--font-family-jost), sans-serif;
+
+  /* --- product detail --- */
+  --product-detail-border: #dddddd;
+  --product-detail-primary-text: #161616;
+  --product-detail-secondary-text: #333333;
+  --product-detail-title-font-family: var(--font-family-jost), sans-serif;
+  --product-gallery-image-background: #f5f5f5;
+  --product-gallery-image-border-active: #161616;
+  --product-gallery-focus: #e50083;
+
+  /* --- sections / slideshow / footer --- */
+  --section-max-width-2xl: 1280px;
+  --featured-product-list-title-font-family: var(--font-family-jost), sans-serif;
+  --featured-product-carousel-title-font-family: var(--font-family-jost), sans-serif;
+  --slideshow-title-font-family: var(--font-family-jost), sans-serif;
+  --footer-background: #f5f5f5;
+  --footer-border-top: #dddddd;
+  --footer-border-bottom: #161616;
+  --footer-section-title: #161616;
+  --footer-link: #333333;
+  --footer-link-hover: #e50083;
+  --footer-copyright: #ababab;
+  --skeleton: #f0f0f0;
+}
+
+/* Jost-style uppercase labels with ELLE tracking on nav + section titles.
+   These target hard-coded Tailwind classes in vibes/ by the CSS-variable
+   name embedded in the class attribute; move into the components if kept. */
+[class*="--nav-link-font-family"],
+[class*="--nav-group-font-family"],
+[class*="--featured-product-list-title-font-family"],
+[class*="--featured-product-carousel-title-font-family"],
+[class*="--footer-section-title"] {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Section titles on elleshop are small-caps-style labels, not display headings. */
+[class*="--featured-product-list-title-font-family"],
+[class*="--featured-product-carousel-title-font-family"] {
+  font-size: 1.25rem !important;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Square corners: cards, badges, nav hover pills, menus, buttons. */
+[class*="--product-card-border-radius"],
+[class*="--card-border-radius"],
+[class*="--badge-font-family"],
+[class*="--nav-link-font-family"],
+[class*="--nav-group-font-family"],
+[class*="--nav-sub-link-font-family"],
+[class*="--nav-menu-background"],
+[class*="--nav-search-background"],
+[class*="--button-font-family"] {
+  border-radius: 0 !important;
+}
+[class*="--button-font-family"]::after {
+  border-radius: 0 !important;
+}
+
+/* Product card copy: brand/subtitle muted + uppercase, title regular weight. */
+[class*="--product-card-light-subtitle"] {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+}
+[class*="--product-card-light-title"] {
+  font-weight: 400;
+}
+
+/* Thin hairline under the header, like elleshop's fixed header. */
+header {
+  border-bottom: 1px solid #dddddd;
+}

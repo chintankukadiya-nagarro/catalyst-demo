@@ -4,6 +4,7 @@ import { client } from '~/client';
 import { PricingFragment } from '~/client/fragments/pricing';
 import { graphql, VariablesOf } from '~/client/graphql';
 import { revalidate } from '~/client/revalidate-target';
+import { BreadcrumbsCategoryFragment } from '~/components/breadcrumbs/fragment';
 import { FeaturedProductsCarouselFragment } from '~/components/featured-products-carousel/fragment';
 import { ProductVariantsInventoryFragment } from '~/components/product-variants-inventory/fragment';
 
@@ -204,12 +205,19 @@ const ProductQuery = graphql(
               }
             }
           }
+          categories(first: 1) {
+            edges {
+              node {
+                ...BreadcrumbsFragment
+              }
+            }
+          }
           ...ProductOptionsFragment
         }
       }
     }
   `,
-  [ProductOptionsFragment],
+  [ProductOptionsFragment, BreadcrumbsCategoryFragment],
 );
 
 export const getProduct = cache(async (entityId: number, customerAccessToken?: string) => {

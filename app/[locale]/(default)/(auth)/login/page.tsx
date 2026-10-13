@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { ButtonLink } from '@/vibes/soul/primitives/button-link';
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { SignInSection } from '@/vibes/soul/sections/sign-in-section';
 import { buildConfig } from '~/build-config/reader';
 import { ForceRefresh } from '~/components/force-refresh';
@@ -41,9 +42,17 @@ export default async function Login({ params, searchParams }: Props) {
   const redirectTarget = redirectUrl.pathname + redirectUrl.search;
   const tokenErrorMessage = error === 'InvalidToken' ? t('invalidToken') : undefined;
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: t('heading'), href: '#' },
+  ];
+
   return (
     <>
       <ForceRefresh />
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pt-6 @xl:px-6 @4xl:px-8">
+        <Breadcrumbs breadcrumbs={breadcrumbs} />
+      </div>
       <SignInSection
         action={login.bind(null, { redirectTo: redirectTarget })}
         emailLabel={t('email')}

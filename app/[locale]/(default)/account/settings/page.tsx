@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Field } from '@/vibes/soul/form/dynamic-form/schema';
 import { AccountSettingsSection } from '@/vibes/soul/sections/account-settings';
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { formFieldTransformer } from '~/data-transformers/form-field-transformer';
 import {
   ACCOUNT_SETTINGS_FIELDS_TO_EXCLUDE,
@@ -98,26 +99,35 @@ export default async function Settings({ params }: Props) {
     fields: updateAccountCustomFields,
   });
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Your Account', href: '/account/orders' },
+    { label: t('title'), href: '#' },
+  ];
+
   return (
-    <AccountSettingsSection
-      account={accountSettings.customerInfo}
-      changePasswordAction={changePassword}
-      changePasswordSubmitLabel={t('cta')}
-      changePasswordTitle={t('changePassword')}
-      confirmPasswordLabel={t('confirmPassword')}
-      currentPasswordLabel={t('currentPassword')}
-      isAccountSubscribed={isAccountSubscribed}
-      newPasswordLabel={t('newPassword')}
-      newsletterSubscriptionCtaLabel={t('cta')}
-      newsletterSubscriptionEnabled={newsletterSubscriptionEnabled}
-      newsletterSubscriptionLabel={t('NewsletterSubscription.label')}
-      newsletterSubscriptionTitle={t('NewsletterSubscription.title')}
-      passwordComplexitySettings={accountSettings.passwordComplexitySettings}
-      title={t('title')}
-      updateAccountAction={updateCustomerWithFields}
-      updateAccountCustomFields={updateAccountCustomFields}
-      updateAccountSubmitLabel={t('cta')}
-      updateNewsletterSubscriptionAction={updateNewsletterSubscriptionActionWithCustomerInfo}
-    />
+    <>
+      <Breadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
+      <AccountSettingsSection
+        account={accountSettings.customerInfo}
+        changePasswordAction={changePassword}
+        changePasswordSubmitLabel={t('cta')}
+        changePasswordTitle={t('changePassword')}
+        confirmPasswordLabel={t('confirmPassword')}
+        currentPasswordLabel={t('currentPassword')}
+        isAccountSubscribed={isAccountSubscribed}
+        newPasswordLabel={t('newPassword')}
+        newsletterSubscriptionCtaLabel={t('cta')}
+        newsletterSubscriptionEnabled={newsletterSubscriptionEnabled}
+        newsletterSubscriptionLabel={t('NewsletterSubscription.label')}
+        newsletterSubscriptionTitle={t('NewsletterSubscription.title')}
+        passwordComplexitySettings={accountSettings.passwordComplexitySettings}
+        title={t('title')}
+        updateAccountAction={updateCustomerWithFields}
+        updateAccountCustomFields={updateAccountCustomFields}
+        updateAccountSubmitLabel={t('cta')}
+        updateNewsletterSubscriptionAction={updateNewsletterSubscriptionActionWithCustomerInfo}
+      />
+    </>
   );
 }

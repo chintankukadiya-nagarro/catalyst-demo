@@ -497,6 +497,7 @@ function FormField({
       return (
         <Select
           errors={formField.errors}
+          extraLabel={field.extraLabel}
           key={formField.id}
           label={field.label}
           name={formField.name}
@@ -566,6 +567,7 @@ function FormField({
       return (
         <ButtonRadioGroup
           errors={formField.errors}
+          extraLabel={field.extraLabel}
           key={formField.id}
           label={field.label}
           name={formField.name}

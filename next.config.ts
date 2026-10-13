@@ -67,6 +67,9 @@ export default async (): Promise<NextConfig> => {
         { protocol: 'https', hostname: 'i.ytimg.com', pathname: '/vi/**' },
         { protocol: 'https', hostname: 'images.unsplash.com' },
         { protocol: 'https', hostname: '**.bigcommerce.com' },
+        { protocol: 'https', hostname: '**.makeswift.com' },
+        { protocol: 'https', hostname: '**.amazonaws.com' },
+        { protocol: 'https', hostname: '**.cloudfront.net' },
       ],
     },
     typescript: {

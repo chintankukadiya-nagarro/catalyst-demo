@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { clsx } from 'clsx';
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
@@ -181,6 +182,11 @@ export default async function RootLayout({ params, children }: Props) {
               </ConsentManager>
             </LocaleRoutingProvider>
           </NextIntlClientProvider>
+          <Script
+            data-channel-key="pub_0ef9d725c66a9aef"
+            src="https://js.smile.io/v1/smile.js"
+            strategy="afterInteractive"
+          />
           <VercelComponents />
           <ContainerQueryPolyfill />
         </body>

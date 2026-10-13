@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Address, AddressListSection } from '@/vibes/soul/sections/address-list-section';
+import { Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import {
   formFieldTransformer,
   injectCountryCodeOptions,
@@ -93,21 +94,30 @@ export default async function Addresses({ params, searchParams }: Props) {
     })
     .filter(exists);
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Your Account', href: '/account/orders' },
+    { label: t('title'), href: '#' },
+  ];
+
   return (
-    <AddressListSection
-      addressAction={addressAction}
-      addresses={addresses}
-      cancelLabel={t('cancel')}
-      createLabel={t('create')}
-      deleteLabel={t('delete')}
-      editLabel={t('edit')}
-      emptyStateTitle={t('EmptyState.title')}
-      fields={[...fields, { name: 'id', type: 'hidden', label: 'ID' }]}
-      minimumAddressCount={0}
-      setDefaultLabel={t('setDefault')}
-      showAddFormLabel={t('cta')}
-      title={t('title')}
-      updateLabel={t('update')}
-    />
+    <>
+      <Breadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
+      <AddressListSection
+        addressAction={addressAction}
+        addresses={addresses}
+        cancelLabel={t('cancel')}
+        createLabel={t('create')}
+        deleteLabel={t('delete')}
+        editLabel={t('edit')}
+        emptyStateTitle={t('EmptyState.title')}
+        fields={[...fields, { name: 'id', type: 'hidden', label: 'ID' }]}
+        minimumAddressCount={0}
+        setDefaultLabel={t('setDefault')}
+        showAddFormLabel={t('cta')}
+        title={t('title')}
+        updateLabel={t('update')}
+      />
+    </>
   );
 }

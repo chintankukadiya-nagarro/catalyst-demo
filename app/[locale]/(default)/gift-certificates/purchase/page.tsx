@@ -167,6 +167,7 @@ export default async function GiftCertificatePurchasePage({ params }: Props) {
     <GiftCertificatePurchaseSection
       action={addGiftCertificateToCart}
       breadcrumbs={[
+        { label: 'Home', href: '/' },
         { label: t('title'), href: '/gift-certificates' },
         { label: t('Purchase.breadcrumbTitle'), href: '#' },
       ]}

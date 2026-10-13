@@ -49,6 +49,10 @@ export default async function GiftCertificates(props: Props) {
       action={getGiftCertificateByCode}
       breadcrumbs={[
         {
+          label: 'Home',
+          href: '/',
+        },
+        {
           label: t('title'),
           href: '/gift-certificates',
         },

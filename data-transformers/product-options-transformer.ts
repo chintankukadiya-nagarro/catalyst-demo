@@ -8,11 +8,16 @@ import { getDateFieldBounds } from '~/lib/date-field-limits';
 
 export const productOptionsTransformer = async (
   productOptions: ResultOf<typeof ProductOptionsFragment>['productOptions'],
+  sizeGuideComponent?: React.ReactNode,
 ) => {
   const t = await getTranslations('Product.ProductDetails');
 
   return removeEdgesAndNodes(productOptions)
     .map<Field | null>((option) => {
+      const isSizeOption =
+        /size|サイズ|寸法/i.test(option.displayName);
+      const extraLabel = isSizeOption && sizeGuideComponent ? sizeGuideComponent : undefined;
+
       if (option.__typename === 'MultipleChoiceOption') {
         const values = removeEdgesAndNodes(option.values);
 
@@ -22,6 +27,7 @@ export const productOptionsTransformer = async (
               persist: true,
               type: 'swatch-radio-group',
               label: option.displayName,
+              extraLabel,
               required: option.isRequired,
               name: option.entityId.toString(),
               defaultValue: values.find((value) => value.isDefault)?.entityId.toString(),
@@ -54,6 +60,7 @@ export const productOptionsTransformer = async (
               persist: true,
               type: 'button-radio-group',
               label: option.displayName,
+              extraLabel,
               required: option.isRequired,
               name: option.entityId.toString(),
               defaultValue: values.find((value) => value.isDefault)?.entityId.toString(),
@@ -84,6 +91,7 @@ export const productOptionsTransformer = async (
               persist: true,
               type: 'select',
               label: option.displayName,
+              extraLabel,
               required: option.isRequired,
               name: option.entityId.toString(),
               defaultValue: values.find((value) => value.isDefault)?.entityId.toString(),

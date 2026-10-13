@@ -182,6 +182,7 @@
       "addresses": "Addresses",
       "logout": "Logout",
       "orders": "Orders",
+      "rewards": "Rewards & Points",
       "settings": "Account",
       "wishlists": "Wish lists"
     },
@@ -515,6 +516,7 @@
       "increaseQuantity": "Increase quantity",
       "decreaseQuantity": "Decrease quantity",
       "emptySelectPlaceholder": "Select an option",
+      "sizeGuide": "Size guide",
       "successMessage": "{cartItems, plural, =1 {1 item} other {# items}} added to <cartLink> your cart</cartLink>",
       "missingCart": "Cart not found. Please try again later!",
       "unknownError": "Unknown error. Please try again later.",
@@ -632,6 +634,20 @@
     "Header": {
       "home": "Home",
       "toggleNavigation": "Toggle navigation",
+      "SecondaryNav": {
+        "new-arrivals": "New Arrivals",
+        "brands": "Brand",
+        "category": "Category",
+        "features": "Special Feature",
+        "blog": "ELLE"
+      },
+      "MenuOverlay": {
+        "close": "Close menu",
+        "items": "Items",
+        "category": "Category",
+        "contents": "Contents",
+        "stayInTheLoop": "Stay in the Loop"
+      },
       "Icons": {
         "account": "Profile",
         "cart": "Cart",
