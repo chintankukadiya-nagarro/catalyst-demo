@@ -25,7 +25,7 @@ runtime.registerComponent(MSTabCarousel, {
     className: Style(),
     title: TextInput({
       label: 'Main Title',
-      defaultValue: 'Popular Products',
+      defaultValue: 'Ranking',
     }),
     subtitle: TextInput({
       label: 'Subtitle (optional)',
@@ -101,16 +101,16 @@ runtime.registerComponent(MSTabCarousel, {
     }),
     showNumbers: Checkbox({
       label: 'Show number badges (No. 01, No. 02...)',
-      defaultValue: false,
+      defaultValue: true,
     }),
     aspectRatio: Select({
       label: 'Image aspect ratio',
       options: [
+        { value: '1:1', label: '1:1 (Square)' },
         { value: '5:6', label: '5:6 (Portrait)' },
         { value: '3:4', label: '3:4 (Portrait)' },
-        { value: '1:1', label: '1:1 (Square)' },
       ],
-      defaultValue: '5:6',
+      defaultValue: '1:1',
     }),
     hideOverflow: Checkbox({
       label: 'Hide overflow',

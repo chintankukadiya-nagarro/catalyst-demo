@@ -15,7 +15,7 @@ export interface TabCarouselProduct {
     src: string;
     alt: string;
   };
-  price?: Price;
+  price?: Price | string;
   subtitle?: string; // Brand name
   badge?: string; // e.g. "New Arrivals", "Back in stock", "reservation"
   secondaryBadge?: string;
@@ -39,7 +39,7 @@ export function TabCarouselProductCard({
   product,
   numberIndex,
   showNumber = false,
-  aspectRatio = '5:6',
+  aspectRatio = '1:1',
   className,
 }: TabCarouselProductCardProps) {
   const {
@@ -55,12 +55,12 @@ export function TabCarouselProductCard({
   } = product;
 
   return (
-    <article className={clsx('group flex w-full flex-col font-sans', className)}>
+    <article className={clsx('group flex w-full flex-col font-sans select-none', className)}>
       {/* Product Image Container */}
       <Link className="relative block w-full overflow-hidden focus:outline-none" href={href}>
         <div
           className={clsx(
-            'relative w-full overflow-hidden bg-neutral-100 transition-colors',
+            'relative w-full overflow-hidden bg-white transition-colors',
             {
               '1:1': 'aspect-square',
               '5:6': 'aspect-[5/6]',
@@ -73,8 +73,9 @@ export function TabCarouselProductCard({
               alt={image.alt || title}
               className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
               src={image.src}
+              unoptimized={image.src.startsWith('http')}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center p-4 text-center text-xs text-neutral-400">
@@ -82,15 +83,15 @@ export function TabCarouselProductCard({
             </div>
           )}
 
-          {/* Badges on top of image */}
-          <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1">
+          {/* Badges on top-left of image matching reference design */}
+          <div className="absolute left-0 top-0 z-10 flex flex-wrap gap-1">
             {badge != null && badge !== '' && (
-              <span className="bg-neutral-900 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-white">
+              <span className="rounded-none bg-black px-1.5 py-0.5 text-[9px] font-normal tracking-wide text-white uppercase">
                 {badge}
               </span>
             )}
             {secondaryBadge != null && secondaryBadge !== '' && (
-              <span className="bg-neutral-500 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-white">
+              <span className="rounded-none bg-[#8e8e8e] px-1.5 py-0.5 text-[9px] font-normal tracking-wide text-white uppercase">
                 {secondaryBadge}
               </span>
             )}
@@ -98,25 +99,25 @@ export function TabCarouselProductCard({
         </div>
       </Link>
 
-      {/* Product Details */}
-      <div className="mt-2.5 flex flex-col space-y-1 text-left">
+      {/* Product Details matching reference typography */}
+      <div className="mt-2.5 flex flex-col text-left">
         {/* Number Badge: No. 01, No. 02... */}
         {showNumber && numberIndex != null && (
-          <span className="text-[11px] font-medium tracking-wider text-neutral-700">
+          <span className="font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-[10px] font-normal tracking-[0.04em] text-neutral-800 sm:text-[11px]">
             {formatNumberBadge(numberIndex)}
           </span>
         )}
 
-        {/* Brand Name (subtitle) */}
+        {/* Brand Name */}
         {subtitle != null && subtitle !== '' && (
-          <span className="truncate text-[11px] font-normal uppercase tracking-wider text-neutral-500">
+          <span className="mt-0.5 truncate font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-[9px] font-normal tracking-wider text-[#9e9e9e] uppercase sm:text-[10px]">
             {subtitle}
           </span>
         )}
 
-        {/* Product Title */}
+        {/* Product Title: Refined regular weight */}
         <Link
-          className="line-clamp-2 text-xs font-semibold leading-snug text-neutral-900 transition-colors group-hover:text-neutral-600 sm:text-sm"
+          className="mt-1 line-clamp-2 font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-[11px] font-normal leading-[1.35] text-neutral-900 transition-colors group-hover:text-neutral-600 sm:text-xs"
           href={href}
           title={title}
         >
@@ -125,14 +126,14 @@ export function TabCarouselProductCard({
 
         {/* Price */}
         {price != null && (
-          <div className="pt-0.5 text-xs font-medium text-neutral-900 sm:text-sm">
-            <PriceLabel price={price} />
+          <div className="mt-1 font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-[11px] font-normal text-neutral-900 sm:text-xs">
+            {typeof price === 'string' ? price : <PriceLabel price={price} />}
           </div>
         )}
 
         {/* Stock / Availability */}
         {(!isInStock || (inventoryMessage != null && inventoryMessage !== '')) && (
-          <span className="text-[11px] text-neutral-500">
+          <span className="mt-0.5 font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-[10px] font-normal text-[#9e9e9e]">
             {inventoryMessage ?? (!isInStock ? 'Out of stock' : '')}
           </span>
         )}
@@ -142,17 +143,17 @@ export function TabCarouselProductCard({
 }
 
 export function TabCarouselProductCardSkeleton({
-  aspectRatio = '5:6',
+  aspectRatio = '1:1',
   showNumber = false,
 }: {
   aspectRatio?: '5:6' | '3:4' | '1:1';
   showNumber?: boolean;
 }) {
   return (
-    <div className="flex w-full animate-pulse flex-col space-y-2.5">
+    <div className="flex w-full animate-pulse flex-col space-y-2">
       <div
         className={clsx(
-          'w-full bg-neutral-200',
+          'w-full bg-neutral-100',
           {
             '1:1': 'aspect-square',
             '5:6': 'aspect-[5/6]',
@@ -160,10 +161,10 @@ export function TabCarouselProductCardSkeleton({
           }[aspectRatio],
         )}
       />
-      {showNumber && <div className="h-3 w-12 rounded bg-neutral-200" />}
-      <div className="h-3 w-20 rounded bg-neutral-200" />
-      <div className="h-4 w-full rounded bg-neutral-200" />
-      <div className="h-3 w-16 rounded bg-neutral-200" />
+      {showNumber && <div className="h-3 w-12 rounded bg-neutral-100" />}
+      <div className="h-3 w-16 rounded bg-neutral-100" />
+      <div className="h-3.5 w-full rounded bg-neutral-100" />
+      <div className="h-3 w-14 rounded bg-neutral-100" />
     </div>
   );
 }

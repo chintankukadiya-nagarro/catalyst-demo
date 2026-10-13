@@ -10,6 +10,7 @@ export const dmSerifText = DM_Serif_Text({
   display: 'swap',
   subsets: ['latin'],
   weight: '400',
+  style: ['normal', 'italic'],
   variable: '--font-family-dm-serif-text',
 });
 

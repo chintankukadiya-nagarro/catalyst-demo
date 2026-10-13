@@ -53,7 +53,7 @@ export function PeekSlideshow({
       align: 'center',
       containScroll: false,
     },
-    autoplay ? [Autoplay({ delay: interval, stopOnInteraction: false })] : [],
+    autoplay ? [Autoplay({ delay: interval })] : [],
   );
 
   const [selectedIndex, setSelectedIndex] = useState(0);
