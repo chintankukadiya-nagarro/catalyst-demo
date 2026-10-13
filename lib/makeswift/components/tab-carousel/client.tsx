@@ -34,6 +34,7 @@ export interface MSTabCarouselProps {
     'BEST_SELLING' | 'NEWEST' | 'FEATURED' | 'LOWEST_PRICE' | 'HIGHEST_PRICE' | 'BEST_REVIEWED';
   showNumbers?: boolean;
   aspectRatio?: '5:6' | '3:4' | '1:1';
+  hideOverflow?: boolean;
 }
 
 interface ResolvedTab extends TabCarouselCategoryItem {
@@ -128,6 +129,7 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
       sort = 'BEST_SELLING',
       showNumbers = false,
       aspectRatio = '5:6',
+      hideOverflow = true,
     },
     ref,
   ) {
@@ -250,6 +252,7 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
         aspectRatio={aspectRatio}
         categories={resolvedTabs}
         className={className}
+        hideOverflow={hideOverflow}
         isLoading={isLoading}
         onCategoryChange={setActiveTabId}
         products={products}

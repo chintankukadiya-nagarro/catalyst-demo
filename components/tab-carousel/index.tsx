@@ -34,6 +34,7 @@ export interface TabCarouselProps {
   isLoading?: boolean;
   showNumbers?: boolean;
   aspectRatio?: '5:6' | '3:4' | '1:1';
+  hideOverflow?: boolean;
   className?: string;
 }
 
@@ -49,6 +50,7 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
     isLoading = false,
     showNumbers = false,
     aspectRatio = '5:6',
+    hideOverflow = true,
     className,
   },
   ref,
@@ -93,7 +95,7 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
       className={clsx('mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8', className)}
       ref={ref}
     >
-      <Carousel hideOverflow={false} opts={{ align: 'start', dragFree: true }}>
+      <Carousel hideOverflow={hideOverflow} opts={{ align: 'start', dragFree: true }}>
         {/* Header Row: Title & Prev/Next Arrows */}
         <div className="mb-4 flex items-center justify-between">
           <div>
