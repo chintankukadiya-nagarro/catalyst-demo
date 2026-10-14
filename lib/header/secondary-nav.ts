@@ -35,7 +35,7 @@ type SecondaryNavTranslator = (key: SecondaryNavKey) => string;
 export function getDefaultSecondaryNavLinks(t: SecondaryNavTranslator): SecondaryNavLink[] {
   return [
     { key: 'new-arrivals', label: t('new-arrivals'), href: '/search?sort=newest' },
-    { key: 'brands', label: t('brands'), href: '/search' },
+    { key: 'brands', label: t('brands'), href: '/brands' },
     { key: 'category', label: t('category'), href: '/search' },
     { key: 'features', label: t('features'), href: '/blog' },
     { key: 'blog', label: t('blog'), href: '/blog' },
