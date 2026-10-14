@@ -10,7 +10,6 @@ import { ProductCardFragment } from '~/components/product-card/fragment';
 import { getPreferredCurrencyCode } from '~/lib/currency';
 
 import { getCategoryDescendantIds } from './get-category-tree';
-import { getBestSellingProducts, getFeaturedProducts, getNewestProducts } from './get-products';
 
 const GetTabCarouselProductsQuery = graphql(
   `
@@ -123,34 +122,6 @@ export const getProductsBySkus = cache(
   },
 );
 
-async function fetchDefaultCatalogProducts(
-  sort: TabSliderSortType,
-  limit: number,
-  locale?: string,
-) {
-  if (sort === 'FEATURED') {
-    const featuredRes = await getFeaturedProducts({ locale });
-
-    return featuredRes.status === 'success' && featuredRes.products
-      ? featuredRes.products.slice(0, limit)
-      : [];
-  }
-
-  if (sort === 'NEWEST') {
-    const newestRes = await getNewestProducts({ locale });
-
-    return newestRes.status === 'success' && newestRes.products
-      ? newestRes.products.slice(0, limit)
-      : [];
-  }
-
-  const bestSellingRes = await getBestSellingProducts({ locale });
-
-  return bestSellingRes.status === 'success' && bestSellingRes.products
-    ? bestSellingRes.products.slice(0, limit)
-    : [];
-}
-
 async function fetchCategoryFilteredProducts(
   filters: {
     categoryEntityId?: number;
@@ -232,8 +203,6 @@ export const getTabCarouselProducts = cache(async (options: GetTabCarouselProduc
     }
 
     categoryProducts = await fetchCategoryFilteredProducts(filters, sort, limit, locale);
-  } else if (skuProducts.length === 0) {
-    categoryProducts = await fetchDefaultCatalogProducts(sort, limit, locale);
   }
 
   // Combine SKU products and category products, deduplicated by entityId

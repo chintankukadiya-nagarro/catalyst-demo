@@ -11,7 +11,7 @@ import {
   TabCarouselProductCardSkeleton,
 } from './product-card';
 
-export type { TabCarouselProduct } from './product-card';
+export type { TabCarouselProduct };
 
 export interface TabCarouselCategoryItem {
   id: string;
@@ -33,95 +33,6 @@ export interface TabCarouselProps {
   className?: string;
 }
 
-const DEFAULT_SAMPLE_CATEGORIES: TabCarouselCategoryItem[] = [
-  { id: 'wear', label: 'Wear' },
-  { id: 'bags', label: 'Bags and Wallets' },
-  { id: 'shoes', label: 'shoes' },
-  { id: 'fashion-acc', label: 'Fashion accessories' },
-  { id: 'accessories', label: 'accessories' },
-  { id: 'lingerie', label: 'lingerie' },
-  { id: 'sports', label: 'Sports' },
-];
-
-const DEFAULT_SAMPLE_PRODUCTS: TabCarouselProduct[] = [
-  {
-    id: '1',
-    title: 'ASIEL-XA Suede Lace-Up Sneakers',
-    href: '/shop-all',
-    subtitle: 'STEVE MADDEN',
-    badge: 'Back in stock',
-    price: '¥19,800',
-    image: {
-      src: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=600&q=80',
-      alt: 'STEVE MADDEN ASIEL-XA Suede Lace-Up Sneakers burgundy',
-    },
-  },
-  {
-    id: '2',
-    title: 'ASIEL-XA Suede Lace-Up Sneakers',
-    href: '/shop-all',
-    subtitle: 'STEVE MADDEN',
-    badge: 'Back in stock',
-    price: '¥19,800',
-    image: {
-      src: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80',
-      alt: 'STEVE MADDEN ASIEL-XA Suede Lace-Up Sneakers tan',
-    },
-  },
-  {
-    id: '3',
-    title: '[Pre-order] Popcorn Tissue Case',
-    href: '/shop-all',
-    subtitle: 'LUDLOW',
-    badge: 'New Arrivals',
-    secondaryBadge: 'reservation',
-    price: '¥14,300',
-    image: {
-      src: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80',
-      alt: 'LUDLOW Popcorn Tissue Case',
-    },
-  },
-  {
-    id: '4',
-    title: '[Pre-order] [ELLE SHOP Exclusive] Quilted Bag',
-    href: '/shop-all',
-    subtitle: 'Uhr',
-    badge: 'reservation',
-    price: '¥8,800',
-    image: {
-      src: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=600&q=80',
-      alt: 'Uhr Quilted Bag',
-    },
-  },
-  {
-    id: '5',
-    title: 'balle brooch',
-    href: '/shop-all',
-    subtitle: 'mina perhonen',
-    badge: 'New Arrivals',
-    price: '¥4,400',
-    image: {
-      src: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=600&q=80',
-      alt: 'mina perhonen balle brooch',
-    },
-  },
-  {
-    id: '6',
-    title: '[Pre-order] College Logo Sweatshirt',
-    href: '/shop-all',
-    subtitle: 'THIRD MAGAZINE',
-    badge: 'Back in stock',
-    secondaryBadge: 'reservation',
-    price: '¥29,700',
-    isInStock: false,
-    inventoryMessage: 'Out of stock',
-    image: {
-      src: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80',
-      alt: 'THIRD MAGAZINE College Logo Sweatshirt',
-    },
-  },
-];
-
 export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function TabCarouselComponent(
   {
     title = 'Ranking',
@@ -139,9 +50,6 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
   },
   ref,
 ) {
-  const displayCategories = categories.length > 0 ? categories : DEFAULT_SAMPLE_CATEGORIES;
-  const displayProducts = products.length > 0 ? products : DEFAULT_SAMPLE_PRODUCTS;
-
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     containScroll: 'trimSnaps',
@@ -187,56 +95,23 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
       )}
       ref={ref}
     >
-      {/* Header Container: Title, Subtitle, and Top-Right Chevron Navigation */}
       <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10 xl:px-[max(2rem,calc((100vw-1280px)/2+2rem))]">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-[family-name:Didot,'Bodoni_MT','Bodoni_72','Playfair_Display',var(--font-family-dm-serif-text),Georgia,serif] text-4xl leading-tight tracking-[-0.03em] text-neutral-900 italic sm:text-5xl lg:text-[54px]">
-              {title}
-            </h2>
-            {subtitle != null && subtitle !== '' && (
-              <p className="mt-1 font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-xs font-normal tracking-wide text-neutral-500 uppercase">
-                {subtitle}
-              </p>
-            )}
-          </div>
-
-          {/* Minimalist Top-Right Chevron Navigation matching screenshot */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button
-              aria-label="Previous products"
-              className={clsx(
-                'flex items-center justify-center text-neutral-700 transition-colors hover:text-black focus:outline-none cursor-pointer',
-                !canScrollPrev && 'cursor-not-allowed opacity-25',
-              )}
-              disabled={!canScrollPrev}
-              onClick={scrollPrev}
-              type="button"
-            >
-              <ChevronLeft className="h-4 w-4 stroke-[1.25] sm:h-5 sm:w-5" />
-            </button>
-            <button
-              aria-label="Next products"
-              className={clsx(
-                'flex items-center justify-center text-neutral-700 transition-colors hover:text-black focus:outline-none cursor-pointer',
-                !canScrollNext && 'cursor-not-allowed opacity-25',
-              )}
-              disabled={!canScrollNext}
-              onClick={scrollNext}
-              type="button"
-            >
-              <ChevronRight className="h-4 w-4 stroke-[1.25] sm:h-5 sm:w-5" />
-            </button>
-          </div>
-        </div>
+        <h2 className="font-[family-name:Didot,'Bodoni_MT','Bodoni_72','Playfair_Display',var(--font-family-dm-serif-text),Georgia,serif] text-4xl italic leading-tight tracking-[-0.03em] text-neutral-900 sm:text-5xl lg:text-[54px]">
+          {title}
+        </h2>
+        {subtitle != null && subtitle !== '' && (
+          <p className="mt-1 font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-xs font-normal uppercase tracking-wide text-neutral-500">
+            {subtitle}
+          </p>
+        )}
 
         {/* Category Filter Pills: Oval outline for active ALL, light for inactive */}
-        {(displayCategories.length > 0 || (allTabLabel != null && allTabLabel !== '')) && (
-          <div className="no-scrollbar mt-3 mb-7 flex items-center gap-2 overflow-x-auto pb-1 sm:mt-4 sm:mb-9">
-            {allTabLabel != null && allTabLabel !== '' && (
+        {(categories.length > 0 || allTabLabel !== '') && (
+          <div className="no-scrollbar mb-7 mt-3 flex items-center gap-2 overflow-x-auto pb-1 sm:mb-9 sm:mt-4">
+            {allTabLabel !== '' && (
               <button
                 className={clsx(
-                  'whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-normal tracking-wide transition-all duration-200 cursor-pointer',
+                  'cursor-pointer whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-normal tracking-wide transition-all duration-200',
                   activeCategoryId === 'all'
                     ? 'border border-neutral-900 bg-white text-neutral-900 shadow-none'
                     : 'border border-neutral-200/90 bg-white text-neutral-400 hover:border-neutral-400 hover:text-neutral-900',
@@ -248,13 +123,13 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
               </button>
             )}
 
-            {displayCategories.map((cat) => {
+            {categories.map((cat) => {
               const isActive = activeCategoryId === cat.id;
 
               return (
                 <button
                   className={clsx(
-                    'whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-normal tracking-wide transition-all duration-200 cursor-pointer',
+                    'cursor-pointer whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-normal tracking-wide transition-all duration-200',
                     isActive
                       ? 'border border-neutral-900 bg-white text-neutral-900 shadow-none'
                       : 'border border-neutral-200/90 bg-white text-neutral-400 hover:border-neutral-400 hover:text-neutral-900',
@@ -271,10 +146,35 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
         )}
       </div>
 
-      {/* Carousel Track: Left aligns with container, right bleeds to edge */}
-      <div className="w-full pl-4 sm:pl-6 md:pl-8 lg:pl-10 xl:pl-[max(2rem,calc((100vw-1280px)/2+2rem))]">
+      <div className="relative w-full pl-4 sm:pl-6 md:pl-8 lg:pl-10 xl:pl-[max(2rem,calc((100vw-1280px)/2+2rem))]">
+        <button
+          aria-label="Previous products"
+          className={clsx(
+            'absolute left-1 top-[82px] z-20 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center text-neutral-800 transition-opacity duration-300 hover:text-black focus:outline-none sm:left-3 sm:top-[92px] md:top-[100px] lg:left-4 lg:top-[105px] xl:left-[max(0.5rem,calc((100vw-1280px)/2+0.5rem))] xl:top-[110px]',
+            '[filter:drop-shadow(0_1px_3px_rgba(255,255,255,0.9))_drop-shadow(0_1px_2px_rgba(0,0,0,0.4))]',
+            canScrollPrev ? 'opacity-80 hover:opacity-100' : 'pointer-events-none opacity-0',
+          )}
+          disabled={!canScrollPrev}
+          onClick={scrollPrev}
+          type="button"
+        >
+          <ChevronLeft className="h-8 w-8 stroke-[1.25] sm:h-9 sm:w-9" />
+        </button>
+        <button
+          aria-label="Next products"
+          className={clsx(
+            'absolute right-2 top-[82px] z-20 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center text-neutral-800 transition-opacity duration-300 hover:text-black focus:outline-none sm:right-4 sm:top-[92px] md:top-[100px] lg:right-6 lg:top-[105px] xl:top-[110px]',
+            '[filter:drop-shadow(0_1px_3px_rgba(255,255,255,0.9))_drop-shadow(0_1px_2px_rgba(0,0,0,0.4))]',
+            canScrollNext ? 'opacity-80 hover:opacity-100' : 'pointer-events-none opacity-0',
+          )}
+          disabled={!canScrollNext}
+          onClick={scrollNext}
+          type="button"
+        >
+          <ChevronRight className="h-8 w-8 stroke-[1.25] sm:h-9 sm:w-9" />
+        </button>
         <div className="cursor-grab overflow-hidden active:cursor-grabbing" ref={emblaRef}>
-          <div className="-ml-3 flex sm:-ml-4 lg:-ml-5 pr-4 sm:pr-6 lg:pr-10">
+          <div className="-ml-3 flex pr-4 sm:-ml-4 sm:pr-6 lg:-ml-5 lg:pr-10">
             {isLoading
               ? Array.from({ length: 6 }).map((_, index) => (
                   <div
@@ -287,7 +187,7 @@ export const TabCarousel = forwardRef<HTMLElement, TabCarouselProps>(function Ta
                     />
                   </div>
                 ))
-              : displayProducts.map((product, index) => (
+              : products.map((product, index) => (
                   <div
                     className="w-[165px] min-w-0 shrink-0 grow-0 pl-3 sm:w-[185px] sm:pl-4 md:w-[200px] lg:w-[210px] lg:pl-5 xl:w-[220px]"
                     key={product.id}
