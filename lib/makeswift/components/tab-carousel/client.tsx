@@ -42,6 +42,38 @@ interface ResolvedTab extends TabCarouselCategoryItem {
   skus: string[];
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function extractNumericEntityId(value: unknown, depth = 0): string | undefined {
+  if (depth > 3 || value == null) {
+    return undefined;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return String(Math.trunc(value));
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+
+    if (/^\d+$/.test(trimmed)) {
+      return trimmed;
+    }
+
+    return undefined;
+  }
+
+  if (isRecord(value)) {
+    return (
+      extractNumericEntityId(value.value, depth + 1) ?? extractNumericEntityId(value.id, depth + 1)
+    );
+  }
+
+  return undefined;
+}
+
 function parseCombobox(selection: ComboboxSelection): { entityId?: string; label?: string } {
   if (selection == null) {
     return {};
@@ -49,30 +81,15 @@ function parseCombobox(selection: ComboboxSelection): { entityId?: string; label
 
   if (typeof selection === 'string') {
     const trimmed = selection.trim();
+    const parsedId = extractNumericEntityId(trimmed);
 
-    if (/^\d+$/.test(trimmed)) {
-      return { entityId: trimmed };
-    }
-
-    return { label: trimmed };
+    return parsedId ? { entityId: parsedId } : { label: trimmed };
   }
 
-  const rawValue = selection.value ?? selection.id;
   const label = typeof selection.label === 'string' ? selection.label : undefined;
+  const entityId = extractNumericEntityId(selection.value) ?? extractNumericEntityId(selection.id);
 
-  if (typeof rawValue === 'number') {
-    return { entityId: String(rawValue), label };
-  }
-
-  if (typeof rawValue === 'string') {
-    const trimmed = rawValue.trim();
-
-    if (/^\d+$/.test(trimmed)) {
-      return { entityId: trimmed, label };
-    }
-  }
-
-  return { label };
+  return { entityId, label };
 }
 
 function parseSkus(skusString?: string): string[] {
@@ -86,7 +103,29 @@ function parseSkus(skusString?: string): string[] {
     .filter((s) => s.length > 0);
 }
 
+const GraphQLConnectionSchema = <T extends z.ZodTypeAny>(nodeSchema: T) =>
+  z
+    .object({
+      edges: z
+        .array(
+          z.object({
+            node: nodeSchema,
+          }),
+        )
+        .nullable()
+        .optional(),
+    })
+    .nullable()
+    .optional();
+
 const TabCarouselApiProductSchema = BcProductSchema.extend({
+  brand: z
+    .object({
+      name: z.string(),
+      path: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
   inventory: z
     .object({
       isInStock: z.boolean().optional(),
@@ -94,14 +133,50 @@ const TabCarouselApiProductSchema = BcProductSchema.extend({
     })
     .nullable()
     .optional(),
+  featuredPromotions: GraphQLConnectionSchema(
+    z.object({
+      entityId: z.number().optional(),
+      text: z.string(),
+    }),
+  ),
+  customFields: GraphQLConnectionSchema(
+    z.object({
+      name: z.string(),
+      value: z.string(),
+    }),
+  ),
 });
 
 type TabCarouselApiProduct = z.infer<typeof TabCarouselApiProductSchema>;
 
 const ApiResponseSchema = z.object({
   status: z.string(),
-  products: z.array(TabCarouselApiProductSchema),
+  products: z.array(z.unknown()),
 });
+
+function parseTabCarouselProducts(json: unknown): TabCarouselApiProduct[] {
+  const envelope = ApiResponseSchema.safeParse(json);
+
+  if (!envelope.success) {
+    // eslint-disable-next-line no-console
+    console.error('Tab carousel API response failed schema', envelope.error);
+
+    return [];
+  }
+
+  return envelope.data.products.flatMap((item, index) => {
+    const parsed = TabCarouselApiProductSchema.safeParse(item);
+
+    if (!parsed.success) {
+      // eslint-disable-next-line no-console
+      console.error(`Tab carousel product at index ${index} failed schema`, parsed.error);
+
+      return [];
+    }
+
+    return [parsed.data];
+  });
+}
 
 const fetcher = async (url: string): Promise<TabCarouselApiProduct[]> => {
   const res = await fetch(url);
@@ -110,24 +185,42 @@ const fetcher = async (url: string): Promise<TabCarouselApiProduct[]> => {
     throw new Error(`Failed to fetch products: ${res.statusText}`);
   }
 
-  const json: unknown = await res.json();
-  const parsed = ApiResponseSchema.safeParse(json);
-
-  return parsed.success ? parsed.data.products : [];
+  return parseTabCarouselProducts(await res.json());
 };
+
+function resolveCdnImageUrl(url: string): string {
+  return url.replaceAll('{:size}', '500w');
+}
+
+function firstPromotionText(product: TabCarouselApiProduct): string | undefined {
+  const text = product.featuredPromotions?.edges?.[0]?.node.text.trim();
+
+  return text !== '' ? text : undefined;
+}
+
+function customFieldBadge(product: TabCarouselApiProduct): string | undefined {
+  const match = product.customFields?.edges?.find((edge) => {
+    const name = edge.node.name.trim().toLowerCase();
+
+    return name === 'badge' || name === 'label';
+  });
+  const value = match?.node.value.trim();
+
+  return value !== '' ? value : undefined;
+}
 
 export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
   function MakeswiftTabCarousel(
     {
       className,
-      title = 'Popular Products',
+      title = 'Ranking',
       subtitle,
       showAllTab = true,
       allTabLabel = 'ALL',
       tabs = [],
       limit = 10,
       sort = 'BEST_SELLING',
-      showNumbers = false,
+      showNumbers = true,
       aspectRatio = '5:6',
       hideOverflow = true,
     },
@@ -136,7 +229,6 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
     const locale = useLocale();
     const format = useFormatter();
 
-    // Parse configured tabs into display items, entity IDs, and SKU lists
     const resolvedTabs: ResolvedTab[] = useMemo(() => {
       return tabs
         .map((tab, idx) => {
@@ -157,12 +249,10 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
         .filter((tab) => tab.id !== '');
     }, [tabs]);
 
-    // Initial active tab
     const [activeTabId, setActiveTabId] = useState<string>(
       showAllTab ? 'all' : (resolvedTabs[0]?.id ?? 'all'),
     );
 
-    // Keep activeTabId in sync if showAllTab changes or active tab is removed
     useEffect(() => {
       if (!showAllTab && activeTabId === 'all' && resolvedTabs.length > 0) {
         const firstTab = resolvedTabs[0];
@@ -173,7 +263,6 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
       }
     }, [showAllTab, activeTabId, resolvedTabs]);
 
-    // Build API query URL based on active tab
     const apiUrl = useMemo(() => {
       const params = new URLSearchParams();
 
@@ -182,13 +271,14 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
       params.append('locale', locale);
 
       if (activeTabId === 'all') {
-        // Collect all category IDs across all tabs
         const allCategoryIds = resolvedTabs
           .map((tab) => tab.categoryEntityId)
           .filter((id): id is string => id != null && /^\d+$/.test(id));
-
-        // Collect all SKUs across all tabs
         const allSkus = Array.from(new Set(resolvedTabs.flatMap((tab) => tab.skus)));
+
+        if (allCategoryIds.length === 0 && allSkus.length === 0) {
+          return null;
+        }
 
         if (allCategoryIds.length > 0) {
           params.append('categoryIds', allCategoryIds.join(','));
@@ -200,14 +290,19 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
       } else {
         const currentTab = resolvedTabs.find((tab) => tab.id === activeTabId);
 
-        if (currentTab) {
-          if (currentTab.categoryEntityId) {
-            params.append('categoryId', currentTab.categoryEntityId);
-          }
+        if (
+          currentTab == null ||
+          (currentTab.categoryEntityId == null && currentTab.skus.length === 0)
+        ) {
+          return null;
+        }
 
-          if (currentTab.skus.length > 0) {
-            params.append('skus', currentTab.skus.join(','));
-          }
+        if (currentTab.categoryEntityId) {
+          params.append('categoryId', currentTab.categoryEntityId);
+        }
+
+        if (currentTab.skus.length > 0) {
+          params.append('skus', currentTab.skus.join(','));
         }
       }
 
@@ -219,7 +314,6 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
       dedupingInterval: 60000,
     });
 
-    // Map raw BigCommerce products to TabCarouselProduct items
     const products: TabCarouselProduct[] = useMemo(() => {
       if (!rawProducts) {
         return [];
@@ -228,6 +322,8 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
       return rawProducts.map((p) => {
         const isInStock = p.inventory?.isInStock ?? true;
         const price = pricesTransformer(p, format);
+        const badge = firstPromotionText(p);
+        const secondaryBadge = customFieldBadge(p);
 
         return {
           id: p.entityId.toString(),
@@ -235,10 +331,12 @@ export const MSTabCarousel = forwardRef<HTMLElement, MSTabCarouselProps>(
           href: p.path,
           image:
             p.defaultImage != null
-              ? { src: p.defaultImage.url, alt: p.defaultImage.altText }
+              ? { src: resolveCdnImageUrl(p.defaultImage.url), alt: p.defaultImage.altText }
               : undefined,
           price,
           subtitle: p.brand?.name ?? undefined,
+          badge,
+          secondaryBadge: secondaryBadge !== badge ? secondaryBadge : undefined,
           isInStock,
           inventoryMessage: !isInStock ? 'Out of stock' : undefined,
         };
