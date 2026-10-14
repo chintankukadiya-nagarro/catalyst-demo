@@ -132,11 +132,11 @@ async function fetchCategoryFilteredProducts(
   limit: number,
   locale?: string,
 ) {
-  const customerAccessToken = await getSessionCustomerAccessToken();
-  const currencyCode = await getPreferredCurrencyCode();
-  const channelId = getChannelIdFromLocale(locale);
-
   try {
+    const customerAccessToken = await getSessionCustomerAccessToken();
+    const currencyCode = await getPreferredCurrencyCode();
+    const channelId = getChannelIdFromLocale(locale);
+
     const response = await client.fetch({
       document: GetTabCarouselProductsQuery,
       variables: {
@@ -185,7 +185,6 @@ export const getTabCarouselProducts = cache(async (options: GetTabCarouselProduc
   let categoryProducts: typeof skuProducts = [];
 
   if (rawCategoryIds.length > 0) {
-    // Resolve all descendant category IDs so child category products are included
     const expandedCategoryIds = await getCategoryDescendantIds(rawCategoryIds, { locale });
 
     const filters: {

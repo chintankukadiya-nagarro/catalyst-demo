@@ -51,16 +51,26 @@ export const GET = async (request: NextRequest) => {
         .filter((s) => s.length > 0)
     : undefined;
 
-  const result = await getTabCarouselProducts({
-    categoryEntityId:
-      categoryEntityId && !Number.isNaN(categoryEntityId) ? categoryEntityId : undefined,
-    categoryEntityIds:
-      categoryEntityIds && categoryEntityIds.length > 0 ? categoryEntityIds : undefined,
-    skus,
-    limit,
-    sort,
-    locale,
-  });
+  try {
+    const result = await getTabCarouselProducts({
+      categoryEntityId:
+        categoryEntityId && !Number.isNaN(categoryEntityId) ? categoryEntityId : undefined,
+      categoryEntityIds:
+        categoryEntityIds && categoryEntityIds.length > 0 ? categoryEntityIds : undefined,
+      skus,
+      limit,
+      sort,
+      locale,
+    });
 
-  return NextResponse.json(result);
+    return NextResponse.json(result);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Tab carousel products request failed', error);
+
+    return NextResponse.json(
+      { status: 'error', error: 'Failed to fetch tab carousel products' },
+      { status: 500 },
+    );
+  }
 };
