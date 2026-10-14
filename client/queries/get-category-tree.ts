@@ -74,8 +74,10 @@ function collectDescendantIds(
       result.add(node.entityId);
     }
 
-    if (node.children.length > 0) {
-      collectDescendantIds(node.children, targetIds, result, shouldInclude);
+    const childNodes = node.children ?? [];
+
+    if (childNodes.length > 0) {
+      collectDescendantIds(childNodes, targetIds, result, shouldInclude);
     }
   });
 }
