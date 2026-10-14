@@ -7,6 +7,7 @@ import { Breadcrumb, Breadcrumbs } from '~/components/breadcrumbs';
 export interface MSBreadcrumbsProps {
   className?: string;
   useAutoPath?: boolean;
+  container?: boolean;
   breadcrumbs?: Array<{
     label: string;
     href?: { href?: string; target?: string } | string;
@@ -28,7 +29,7 @@ function resolveBreadcrumbHref(
 }
 
 export const MSBreadcrumbs = forwardRef<HTMLDivElement, MSBreadcrumbsProps>(
-  ({ className, useAutoPath = true, breadcrumbs = [] }, ref) => {
+  ({ className, useAutoPath = true, container = true, breadcrumbs = [] }, ref) => {
     const customItems: Breadcrumb[] | undefined =
       !useAutoPath && breadcrumbs.length > 0
         ? breadcrumbs.map((b) => ({
@@ -39,7 +40,7 @@ export const MSBreadcrumbs = forwardRef<HTMLDivElement, MSBreadcrumbsProps>(
 
     return (
       <div className={className} ref={ref}>
-        <Breadcrumbs breadcrumbs={customItems} container={false} />
+        <Breadcrumbs breadcrumbs={customItems} container={container} />
       </div>
     );
   },

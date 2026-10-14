@@ -12,6 +12,10 @@ runtime.registerComponent(MSBreadcrumbs, {
   icon: 'layout',
   props: {
     className: Style(),
+    container: Checkbox({
+      label: 'Constrain to container width',
+      defaultValue: true,
+    }),
     useAutoPath: Checkbox({
       label: 'Auto-detect from URL',
       defaultValue: true,
