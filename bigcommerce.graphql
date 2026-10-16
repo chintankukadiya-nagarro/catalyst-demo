@@ -1398,6 +1398,12 @@ type CompanyMutations {
     """The id of the company user to delete."""
     input: DeleteCompanyUserInput!
   ): DeleteCompanyUserResult! @deprecated(reason: "Alpha version. Do not use in production.")
+
+  """Update a company user. Only provided fields are changed."""
+  updateUser(
+    """The id of the company user to update and the fields to change."""
+    input: UpdateCompanyUserInput!
+  ): UpdateCompanyUserResult! @deprecated(reason: "Alpha version. Do not use in production.")
 }
 
 """The status of a company."""
@@ -3548,6 +3554,15 @@ type UpdateCompanyAddressResult {
   errors: [UpdateCompanyAddressError!]!
 }
 
+"""An error encountered while updating a company user."""
+type UpdateCompanyUserError {
+  """A human-readable description of the error."""
+  message: String!
+
+  """A machine-readable error code, if available."""
+  code: String
+}
+
 """An error that occurred while updating the company user's extra fields."""
 type UpdateCompanyUserExtraFieldsError {
   """The input field associated with the error."""
@@ -3558,6 +3573,38 @@ type UpdateCompanyUserExtraFieldsError {
 
   """An optional machine-readable error code."""
   code: String
+}
+
+"""Input for updating a company user. Omitted fields are left unchanged."""
+input UpdateCompanyUserInput {
+  """The id of the company user to update."""
+  entityId: Int!
+
+  """The user's first name."""
+  firstName: String
+
+  """The user's last name."""
+  lastName: String
+
+  """The user's phone number."""
+  phone: String
+
+  """The id of the company role to assign to the user."""
+  companyRoleId: Int
+
+  """The B2B extra field values to set on the user."""
+  extraFields: CompanyUserExtraFieldsInput
+}
+
+"""The result of updating a company user."""
+type UpdateCompanyUserResult {
+  """
+  The id of the company user that was updated, or null if the mutation failed.
+  """
+  entityId: Int
+
+  """Errors encountered while updating the company user, empty on success."""
+  errors: [UpdateCompanyUserError!]!
 }
 
 """
@@ -3908,6 +3955,14 @@ type ActiveCompany {
   A paginated list of orders placed under the current customer's company.
   """
   orders(before: String, after: String, first: Int, last: Int, filters: CompanyOrdersFiltersInput, sortBy: CompanyOrdersSortInput): OrdersConnection
+
+  """
+  A paginated list of the users of the company the customer is currently representing, including a masqueraded or subsidiary company.
+  """
+  users(
+    """Criteria used to narrow down the users returned."""
+    filters: CompanyUsersFiltersInput
+  ): CompanyUserConnection @deprecated(reason: "Alpha version. Do not use in production.")
 }
 
 """A connection to a list of customer addresses."""
@@ -6802,6 +6857,53 @@ input CompanyRolesFiltersInput {
   Filter the roles down to those whose name or code matches this free-text search term.
   """
   search: String
+}
+
+"""A user of a B2B company."""
+type CompanyUser {
+  """The unique ID of the company user."""
+  entityId: Int!
+
+  """The first name of the company user."""
+  firstName: String
+
+  """The last name of the company user."""
+  lastName: String
+
+  """The email address of the company user."""
+  email: String
+
+  """The name of the company role assigned to the company user."""
+  companyRole: String
+}
+
+"""A paginated list of company users."""
+type CompanyUserConnection {
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """A list of edges."""
+  edges: [CompanyUserEdge!]
+
+  """
+  Collection-level information about the full list of company users, such as its total size.
+  """
+  collectionInfo: CollectionInfo
+}
+
+"""An edge in the company user connection."""
+type CompanyUserEdge {
+  """The company user at the end of the edge."""
+  node: CompanyUser!
+
+  """A cursor for use in pagination."""
+  cursor: String!
+}
+
+"""Criteria used to narrow down a list of company users."""
+input CompanyUsersFiltersInput {
+  """Filter the users down to those assigned this company role id."""
+  companyRoleId: Int
 }
 
 """Contact field"""

@@ -15,6 +15,7 @@ import {
   SearchIcon,
   ShoppingBag,
   User,
+  X,
 } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
 import React, {
@@ -24,6 +25,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from 'react';
@@ -143,6 +145,7 @@ interface Props<S extends SearchResult> {
   cartLabel?: string;
   accountLabel?: string;
   openSearchPopupLabel?: string;
+  closeSearchPopupLabel?: string;
   searchLabel?: string;
   mobileMenuTriggerLabel?: string;
   switchCurrencyLabel?: string;
@@ -432,6 +435,7 @@ export const Navigation = forwardRef(function NavigationBar<S extends SearchResu
     cartLabel = 'Cart',
     accountLabel = 'Profile',
     openSearchPopupLabel = 'Open search popup',
+    closeSearchPopupLabel = 'Close search',
     searchLabel = 'Search',
     mobileMenuTriggerLabel = 'Toggle navigation',
     switchCurrencyLabel,
@@ -468,6 +472,22 @@ export const Navigation = forwardRef(function NavigationBar<S extends SearchResu
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isEditorial, setIsSearchOpen]);
 
+  useEffect(() => {
+    if (!isSearchOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen, setIsSearchOpen]);
+
   const streamablePrimaryNavLinks = streamablePrimaryLinks ?? streamableLinks;
 
   return (
@@ -487,7 +507,10 @@ export const Navigation = forwardRef(function NavigationBar<S extends SearchResu
           <MobileMenuButton
             aria-expanded={isMobileMenuOpen}
             aria-label={mobileMenuTriggerLabel}
-            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            onClick={() => {
+              setIsSearchOpen(false);
+              setIsMobileMenuOpen((prev) => !prev);
+            }}
             open={isMobileMenuOpen}
             variant="editorial"
           />
@@ -617,8 +640,19 @@ export const Navigation = forwardRef(function NavigationBar<S extends SearchResu
           )}
         </div>
 
-        {/* Top Level Nav Links */}
-        {isEditorial ? (
+        {/* Top Level Nav Links / inline editorial search */}
+        {isEditorial && isSearchOpen && searchAction ? (
+          <div className="flex min-w-0 flex-1 items-center self-stretch">
+            <SearchForm
+              searchAction={searchAction}
+              searchHref={searchHref}
+              searchInputPlaceholder={searchInputPlaceholder}
+              searchParamName={searchParamName}
+              searchSubmitLabel={searchSubmitLabel}
+              variant="inline"
+            />
+          </div>
+        ) : isEditorial ? (
           <div
             className={clsx(
               'hidden min-w-0 flex-1 items-center justify-center gap-4 @4xl:flex',
@@ -710,33 +744,48 @@ export const Navigation = forwardRef(function NavigationBar<S extends SearchResu
           )}
         >
           {searchAction ? (
-            <Popover.Root onOpenChange={setIsSearchOpen} open={isSearchOpen}>
-              <Popover.Anchor className="absolute left-0 right-0 top-full" />
-              <Popover.Trigger asChild>
-                <button
-                  aria-label={openSearchPopupLabel}
-                  className={navButtonClassName}
-                  onPointerEnter={(e) => e.preventDefault()}
-                  onPointerLeave={(e) => e.preventDefault()}
-                  onPointerMove={(e) => e.preventDefault()}
-                >
-                  <Search size={20} strokeWidth={1} />
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content className="max-h-[calc(var(--radix-popover-content-available-height)-16px)] w-[var(--radix-popper-anchor-width)] py-2 @container data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-                  <div className="flex max-h-[inherit] flex-col rounded-2xl bg-[var(--nav-search-background,hsl(var(--background)))] shadow-xl ring-1 ring-[var(--nav-search-border,hsl(var(--foreground)/5%))] transition-all duration-200 ease-in-out @4xl:inset-x-0">
-                    <SearchForm
-                      searchAction={searchAction}
-                      searchHref={searchHref}
-                      searchInputPlaceholder={searchInputPlaceholder}
-                      searchParamName={searchParamName}
-                      searchSubmitLabel={searchSubmitLabel}
-                    />
-                  </div>
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
+            isEditorial ? (
+              <button
+                aria-expanded={isSearchOpen}
+                aria-label={isSearchOpen ? closeSearchPopupLabel : openSearchPopupLabel}
+                className={navButtonClassName}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsSearchOpen((open) => !open);
+                }}
+                type="button"
+              >
+                {isSearchOpen ? <X size={20} strokeWidth={1} /> : <Search size={20} strokeWidth={1} />}
+              </button>
+            ) : (
+              <Popover.Root onOpenChange={setIsSearchOpen} open={isSearchOpen}>
+                <Popover.Anchor className="absolute left-0 right-0 top-full" />
+                <Popover.Trigger asChild>
+                  <button
+                    aria-label={openSearchPopupLabel}
+                    className={navButtonClassName}
+                    onPointerEnter={(e) => e.preventDefault()}
+                    onPointerLeave={(e) => e.preventDefault()}
+                    onPointerMove={(e) => e.preventDefault()}
+                  >
+                    <Search size={20} strokeWidth={1} />
+                  </button>
+                </Popover.Trigger>
+                <Popover.Portal>
+                  <Popover.Content className="max-h-[calc(var(--radix-popover-content-available-height)-16px)] w-[var(--radix-popper-anchor-width)] py-2 @container data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+                    <div className="flex max-h-[inherit] flex-col rounded-2xl bg-[var(--nav-search-background,hsl(var(--background)))] shadow-xl ring-1 ring-[var(--nav-search-border,hsl(var(--foreground)/5%))] transition-all duration-200 ease-in-out @4xl:inset-x-0">
+                      <SearchForm
+                        searchAction={searchAction}
+                        searchHref={searchHref}
+                        searchInputPlaceholder={searchInputPlaceholder}
+                        searchParamName={searchParamName}
+                        searchSubmitLabel={searchSubmitLabel}
+                      />
+                    </div>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+            )
           ) : (
             <Link aria-label={searchLabel} className={navButtonClassName} href={searchHref}>
               <Search size={20} strokeWidth={1} />
@@ -782,7 +831,7 @@ export const Navigation = forwardRef(function NavigationBar<S extends SearchResu
           ) : null}
 
           {/* Locale / Language Dropdown */}
-          {locales && locales.length > 1 ? (
+          {locales && locales.length > 1 && !(isEditorial && isSearchOpen) ? (
             <LocaleSwitcher
               action={localeAction}
               activeLocaleId={activeLocaleId}
@@ -839,13 +888,16 @@ function SearchForm<S extends SearchResult>({
   searchHref = '/search',
   searchInputPlaceholder = 'Search Products',
   searchSubmitLabel = 'Submit',
+  variant = 'popover',
 }: {
   searchAction: SearchAction<S>;
   searchParamName?: string;
   searchHref?: string;
   searchInputPlaceholder?: string;
   searchSubmitLabel?: string;
+  variant?: 'popover' | 'inline';
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [isSearching, startSearching] = useTransition();
   const [{ searchResults, lastResult, emptyStateTitle, emptyStateSubtitle }, formAction] =
@@ -856,6 +908,13 @@ function SearchForm<S extends SearchResult>({
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isPending = isSearching || isDebouncing || isSubmitting;
+  const isInline = variant === 'inline';
+
+  useEffect(() => {
+    if (isInline) {
+      inputRef.current?.focus();
+    }
+  }, [isInline]);
   const debouncedOnChange = useMemo(() => {
     const debounced = debounce((q: string) => {
       setIsDebouncing(false);
@@ -883,41 +942,69 @@ function SearchForm<S extends SearchResult>({
   }, []);
 
   return (
-    <>
+    <div className={clsx(isInline && 'relative flex w-full min-w-0 flex-col')}>
       <form
         action={searchHref}
-        className="flex items-center gap-3 px-3 py-3 @4xl:px-5 @4xl:py-4"
+        className={
+          isInline
+            ? 'flex min-w-0 items-center gap-3'
+            : 'flex items-center gap-3 px-3 py-3 @4xl:px-5 @4xl:py-4'
+        }
         onSubmit={handleSubmit}
       >
-        <SearchIcon
-          className="hidden shrink-0 text-[var(--nav-search-icon,hsl(var(--contrast-500)))] @xl:block"
-          size={20}
-          strokeWidth={1}
-        />
+        {!isInline && (
+          <SearchIcon
+            className="hidden shrink-0 text-[var(--nav-search-icon,hsl(var(--contrast-500)))] @xl:block"
+            size={20}
+            strokeWidth={1}
+          />
+        )}
         <input
-          className="grow bg-transparent pl-2 text-lg font-medium outline-0 focus-visible:outline-none @xl:pl-0"
+          className={
+            isInline
+              ? 'min-w-0 flex-1 bg-transparent font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-sm italic text-neutral-600 outline-none placeholder:text-neutral-400'
+              : 'grow bg-transparent pl-2 text-lg font-medium outline-0 focus-visible:outline-none @xl:pl-0'
+          }
           name={searchParamName}
           onChange={(e) => {
             setQuery(e.currentTarget.value);
             debouncedOnChange(e.currentTarget.value);
           }}
           placeholder={searchInputPlaceholder}
+          ref={inputRef}
           type="text"
           value={query}
         />
-        <SubmitButton loading={isPending} submitLabel={searchSubmitLabel} />
+        {isInline ? (
+          <button
+            className="shrink-0 border border-neutral-300 px-5 py-2 font-[family-name:var(--font-family-jost),var(--font-family-inter),sans-serif] text-[10px] font-normal uppercase tracking-[0.18em] text-neutral-500 transition-colors hover:border-neutral-900 hover:text-neutral-900"
+            type="submit"
+          >
+            {searchSubmitLabel}
+          </button>
+        ) : (
+          <SubmitButton loading={isPending} submitLabel={searchSubmitLabel} />
+        )}
       </form>
 
-      <SearchResults
-        emptySearchSubtitle={emptyStateSubtitle}
-        emptySearchTitle={emptyStateTitle}
-        errors={form.errors}
-        query={query}
-        searchParamName={searchParamName}
-        searchResults={searchResults}
-        stale={isPending}
-      />
-    </>
+      <div
+        className={
+          isInline
+            ? 'absolute inset-x-0 top-full z-50 max-h-[70vh] overflow-y-auto bg-[var(--nav-search-background,hsl(var(--background)))] shadow-md'
+            : undefined
+        }
+      >
+        <SearchResults
+          emptySearchSubtitle={emptyStateSubtitle}
+          emptySearchTitle={emptyStateTitle}
+          errors={form.errors}
+          query={query}
+          searchParamName={searchParamName}
+          searchResults={searchResults}
+          stale={isPending}
+        />
+      </div>
+    </div>
   );
 }
 

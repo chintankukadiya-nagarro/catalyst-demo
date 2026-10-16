@@ -6,8 +6,8 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "dev": "npm run generate && next dev",
-    "generate": "dotenv -e .env.local -- node ./scripts/generate.cjs",
+    "dev": "npm run generate && node ./scripts/dev.cjs",
+    "generate": "node --env-file=.env.local ./scripts/generate.cjs",
     "build": "npm run generate && catalyst build",
     "build:analyze": "ANALYZE=true npm run build",
     "start": "catalyst start",

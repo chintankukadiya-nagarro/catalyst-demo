@@ -653,6 +653,9 @@
                 "noSearchResultsSubtitle": "別の検索をお試しください。",
                 "somethingWentWrong": "問題が発生しました。 もう一度お試しください。",
                 "inputPlaceholder": "商品、カテゴリ、ブランドを検索...",
+                "inputPlaceholderOpen": "何かお探しですか？",
+                "seeResultsLabel": "SEE RESULTS",
+                "closeLabel": "検索を閉じる",
                 "submitLabel": "検索"
             }
         },
