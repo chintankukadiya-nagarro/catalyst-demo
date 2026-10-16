@@ -682,6 +682,9 @@
         "noSearchResultsSubtitle": "Please try another search.",
         "somethingWentWrong": "Something went wrong. Please try again.",
         "inputPlaceholder": "Search products, categories, brands...",
+        "inputPlaceholderOpen": "Are you looking for something?",
+        "seeResultsLabel": "SEE RESULTS",
+        "closeLabel": "Close search",
         "submitLabel": "Search"
       }
     },

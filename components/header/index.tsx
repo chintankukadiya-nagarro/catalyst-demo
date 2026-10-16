@@ -205,8 +205,10 @@ export const Header = async () => {
         searchHref: '/search',
         searchParamName: 'term',
         searchAction: search,
-        searchInputPlaceholder: t('Search.inputPlaceholder'),
-        searchSubmitLabel: t('Search.submitLabel'),
+        searchInputPlaceholder: t('Search.inputPlaceholderOpen', {
+          defaultMessage: 'Are you looking for something?',
+        }),
+        searchSubmitLabel: t('Search.seeResultsLabel', { defaultMessage: 'SEE RESULTS' }),
         layoutVariant: 'editorial',
         menuOverlayState: {
           ...emptyEditorialMenuOverlayState,
@@ -218,6 +220,7 @@ export const Header = async () => {
         logo,
         mobileMenuTriggerLabel: t('toggleNavigation'),
         openSearchPopupLabel: t('Icons.search'),
+        closeSearchPopupLabel: t('Search.closeLabel', { defaultMessage: 'Close search' }),
         logoLabel: t('home'),
         cartCount: streamableCartCount,
         activeLocaleId: locale,
