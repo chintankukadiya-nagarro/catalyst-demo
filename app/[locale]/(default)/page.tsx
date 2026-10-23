@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 
 import { getMakeswiftPageMetadata, Page as MakeswiftPage } from '~/lib/makeswift';
+import { Slot } from '~/lib/makeswift/slot';
 import { getMetadataAlternates } from '~/lib/seo/canonical';
 
 interface Params {
@@ -28,5 +29,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Home({ params }: Props) {
   const { locale } = await params;
 
-  return <MakeswiftPage locale={locale} path="/" />;
+  return (
+    <>
+      <MakeswiftPage locale={locale} path="/" />
+      <Slot label="Home bottom content" snapshotId="home-bottom-content" />
+    </>
+  );
 }

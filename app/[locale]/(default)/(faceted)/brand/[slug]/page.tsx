@@ -14,6 +14,7 @@ import { pageInfoTransformer } from '~/data-transformers/page-info-transformer';
 import { productCardTransformer } from '~/data-transformers/product-card-transformer';
 import { getPreferredCurrencyCode } from '~/lib/currency';
 import { getMakeswiftPageMetadata } from '~/lib/makeswift';
+import { Slot } from '~/lib/makeswift/slot';
 import { getMetadataAlternates } from '~/lib/seo/canonical';
 
 import { MAX_COMPARE_LIMIT } from '../../../compare/page-data';
@@ -227,8 +228,13 @@ export default async function Brand(props: Props) {
   ];
 
   return (
-    <ProductsListSection
-      breadcrumbs={breadcrumbs}
+    <>
+      <Slot
+        label={`${brand.name} top content`}
+        snapshotId={`brand-${brandId}-top-content`}
+      />
+      <ProductsListSection
+        breadcrumbs={breadcrumbs}
       compareLabel={t('Compare.compare')}
       compareProducts={streamableCompareProducts}
       emptyStateSubtitle={t('Brand.Empty.subtitle')}
@@ -262,5 +268,10 @@ export default async function Brand(props: Props) {
       title={brand.name}
       totalCount={streamableTotalCount}
     />
+      <Slot
+        label={`${brand.name} bottom content`}
+        snapshotId={`brand-${brandId}-bottom-content`}
+      />
+    </>
   );
 }

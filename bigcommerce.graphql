@@ -1373,25 +1373,31 @@ type CompanyMutations {
   addAddress(
     """The values for the new company address."""
     input: AddCompanyAddressInput!
-  ): AddCompanyAddressResult! @deprecated(reason: "Alpha version. Do not use in production.")
+  ): AddCompanyAddressResult!
 
   """Update an existing company address. Only provided fields are changed."""
   updateAddress(
     """The id of the address to update and the fields to change."""
     input: UpdateCompanyAddressInput!
-  ): UpdateCompanyAddressResult! @deprecated(reason: "Alpha version. Do not use in production.")
+  ): UpdateCompanyAddressResult!
 
   """Delete an existing company address."""
   deleteAddress(
     """The id of the address to delete."""
     input: DeleteCompanyAddressInput!
-  ): DeleteCompanyAddressResult! @deprecated(reason: "Alpha version. Do not use in production.")
+  ): DeleteCompanyAddressResult!
 
   """Update the authenticated B2B company user's extra fields."""
   updateCurrentUser(
     """The B2B extra fields to set on the authenticated company user."""
     input: UpdateCurrentUserInput!
   ): UpdateCurrentUserResult! @deprecated(reason: "Alpha version. Do not use in production.")
+
+  """Create a company user in the authenticated customer's company."""
+  createUser(
+    """The details of the company user to create."""
+    input: CreateCompanyUserInput!
+  ): CreateCompanyUserResult @deprecated(reason: "Alpha version. Do not use in production.")
 
   """Delete a company user."""
   deleteUser(
@@ -1616,6 +1622,45 @@ input CreateCheckoutShippingConsignmentInput {
   Select a shipping option using this strategy instead of the store's default shipping option setting. The selected option may differ from the one marked isRecommended. Cannot be provided with selectRecommendedOption set to true.
   """
   shippingOptionSelectionStrategy: ShippingOptionSelectionStrategy
+}
+
+"""An error encountered while creating a company user."""
+union CreateCompanyUserError = ValidationError | AlreadyExistsError | NotAuthorisedError
+
+"""Input for creating a company user."""
+input CreateCompanyUserInput {
+  """
+  The email of the company user. It must not already be in use in the store.
+  """
+  email: String!
+
+  """The first name of the company user."""
+  firstName: String!
+
+  """The last name of the company user."""
+  lastName: String!
+
+  """The phone number of the company user."""
+  phone: String
+
+  """
+  The id of the company role to assign to the company user, as returned by companyRoles.
+  """
+  companyRoleId: Int!
+
+  """
+  The values of the company user extra fields defined by the merchant. Values are validated against each field's configuration.
+  """
+  extraFields: CompanyUserExtraFieldsInput
+}
+
+"""The result of creating a company user."""
+type CreateCompanyUserResult {
+  """The company user that was created, or null if the mutation failed."""
+  user: CompanyUser
+
+  """Errors encountered while creating the company user, empty on success."""
+  errors: [CreateCompanyUserError!]!
 }
 
 """Error when creating a vault initialization."""
@@ -3918,7 +3963,7 @@ type ActiveCompany {
   address(
     """The id of the company address to fetch."""
     entityId: Int!
-  ): CompanyAddress @deprecated(reason: "Alpha version. Do not use in production.")
+  ): CompanyAddress
 
   """
   The name of the current login b2b user's active company. Null when the customer has no active company, such as a super admin who is not masquerading as one.
@@ -3944,7 +3989,7 @@ type ActiveCompany {
   ): CompanyRoleConnection! @deprecated(reason: "Alpha version. Do not use in production.")
 
   """
-  Check whether an email address is already registered, and if so in what capacity, before creating or updating a company user. The store and channel the check runs against are taken from the authenticated request, not from arguments.
+  Check whether an email address is already registered, and if so in what capacity, before creating or updating a company user. The store and channel the check runs against are taken from the authenticated request, not from arguments. Returns null when the feature is not enabled, B2B is not enabled for the store, or the customer has no company. A check that cannot be completed returns an error whose extensions.code is PERMISSION_DENIED, THROTTLED (retryable), UPSTREAM_ERROR or UNRECOGNIZED_USER_TYPE.
   """
   userEmailCheck(
     """The email address to check."""
@@ -3960,6 +4005,11 @@ type ActiveCompany {
   A paginated list of the users of the company the customer is currently representing, including a masqueraded or subsidiary company.
   """
   users(
+    before: String
+    after: String
+    first: Int
+    last: Int
+
     """Criteria used to narrow down the users returned."""
     filters: CompanyUsersFiltersInput
   ): CompanyUserConnection @deprecated(reason: "Alpha version. Do not use in production.")
@@ -4051,7 +4101,7 @@ type B2BConfig {
   """
   Configuration toggles for the address module, or null if B2B address settings are unavailable for the store.
   """
-  address: [B2BConfigField!] @deprecated(reason: "Alpha version. Do not use in production.")
+  address: [B2BConfigField!]
 }
 
 """A single B2B configuration toggle."""
@@ -4116,7 +4166,7 @@ type B2BExtraFields {
   """
   The extra field definitions for the address module, or null if B2B address settings are unavailable for the store.
   """
-  address: [B2BExtraFieldDefinition!] @deprecated(reason: "Alpha version. Do not use in production.")
+  address: [B2BExtraFieldDefinition!]
 
   """
   The extra field definitions for the company user module, or null if B2B user management is unavailable for the store or the shopper is not logged in.
@@ -4337,6 +4387,11 @@ interface BaseOrder {
   The final order total payable amount inclusive of tax, before applying any store credit or gift certificate.
   """
   totalIncTax: Money!
+
+  """
+  The order total inclusive of tax that was paid after applying gift certificates and store credit
+  """
+  totalIncTaxAfterGiftCertificatesAndStoreCredit: Money!
 
   """Message from customer"""
   customerMessage: String
@@ -6808,7 +6863,7 @@ type CompanyQueries {
   address(
     """The id of the company address to fetch."""
     entityId: Int!
-  ): CompanyAddress @deprecated(reason: "Alpha version. Do not use in production.")
+  ): CompanyAddress
 }
 
 """A role that can be assigned to a user of a B2B company."""
@@ -6875,6 +6930,15 @@ type CompanyUser {
 
   """The name of the company role assigned to the company user."""
   companyRole: String
+
+  """The phone number of the company user."""
+  phone: String
+
+  """The ID of the company role assigned to the company user."""
+  companyRoleId: Int
+
+  """Extra field values defined for the company user."""
+  extraFields: [ExtraFieldValue!]!
 }
 
 """A paginated list of company users."""
@@ -8981,6 +9045,11 @@ type Order implements Node & BaseOrder {
   """
   totalIncTax: Money!
 
+  """
+  The order total inclusive of tax that was paid after applying gift certificates and store credit
+  """
+  totalIncTaxAfterGiftCertificatesAndStoreCredit: Money!
+
   """Message from customer"""
   customerMessage: String
 
@@ -9930,6 +9999,11 @@ type OrderWithPayments implements Node & BaseOrder {
   The final order total payable amount inclusive of tax, before applying any store credit or gift certificate.
   """
   totalIncTax: Money!
+
+  """
+  The order total inclusive of tax that was paid after applying gift certificates and store credit
+  """
+  totalIncTaxAfterGiftCertificatesAndStoreCredit: Money!
 
   """Message from customer"""
   customerMessage: String

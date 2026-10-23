@@ -13,6 +13,7 @@ import { pageInfoTransformer } from '~/data-transformers/page-info-transformer';
 import { productCardTransformer } from '~/data-transformers/product-card-transformer';
 import { getPreferredCurrencyCode } from '~/lib/currency';
 import { getMakeswiftPageMetadata } from '~/lib/makeswift';
+import { Slot } from '~/lib/makeswift/slot';
 
 import { MAX_COMPARE_LIMIT } from '../../compare/page-data';
 import { getCompareProducts as getCompareProductsData } from '../fetch-compare-products';
@@ -244,7 +245,9 @@ export default async function Search(props: Props) {
   });
 
   return (
-    <ProductsListSection
+    <>
+      <Slot label="Search top content" snapshotId="search-top-content" />
+      <ProductsListSection
       breadcrumbs={[
         { label: t('Search.Breadcrumbs.home'), href: '/' },
         { label: t('Search.Breadcrumbs.search'), href: `#` },
@@ -282,5 +285,7 @@ export default async function Search(props: Props) {
       title={streamableTitle}
       totalCount={streamableTotalCount}
     />
+      <Slot label="Search bottom content" snapshotId="search-bottom-content" />
+    </>
   );
 }
