@@ -17,6 +17,7 @@ import { productOptionsTransformer } from '~/data-transformers/product-options-t
 import { getPreferredCurrencyCode } from '~/lib/currency';
 import { getMakeswiftPageMetadata } from '~/lib/makeswift';
 import { ProductDetail } from '~/lib/makeswift/components/product-detail';
+import { Slot } from '~/lib/makeswift/slot';
 import { getRecaptchaSiteKey } from '~/lib/recaptcha';
 import { getMetadataAlternates } from '~/lib/seo/canonical';
 
@@ -807,6 +808,7 @@ export default async function Product({ params, searchParams }: Props) {
 
   return (
     <>
+      <Slot label="Product top content" snapshotId="pdp-top-content" />
       <ProductAnalyticsProvider data={streamableAnalyticsData}>
         <ProductDetail
           action={addToCart}
@@ -948,6 +950,7 @@ export default async function Product({ params, searchParams }: Props) {
         productSku={streamableProductSku}
         searchParams={searchParams}
       />
+      <Slot label="Product bottom content" snapshotId="pdp-bottom-content" />
     </>
   );
 }
