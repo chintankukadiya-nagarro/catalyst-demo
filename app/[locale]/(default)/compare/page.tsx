@@ -88,8 +88,15 @@ export default async function Compare(props: Props) {
       rating: product.reviewSummary.averageRating,
       description: <div dangerouslySetInnerHTML={{ __html: product.description }} />,
       customFields: [
-        { name: t('sku'), value: product.sku },
-        { name: t('weight'), value: `${product.weight?.value} ${product.weight?.unit}` },
+        ...(product.sku ? [{ name: t('sku'), value: product.sku }] : []),
+        ...(product.weight?.value && product.weight.value > 0
+          ? [
+              {
+                name: t('weight'),
+                value: `${product.weight.value} ${product.weight.unit || ''}`.trim(),
+              },
+            ]
+          : []),
         ...removeEdgesAndNodes(product.customFields).map(({ name, value }) => ({ name, value })),
       ],
       hasVariants: removeEdgesAndNodes(product.productOptions).length > 0,

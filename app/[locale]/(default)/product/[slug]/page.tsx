@@ -554,18 +554,30 @@ export default async function Product({ params, searchParams }: Props) {
     const customFields = removeEdgesAndNodes(product.customFields);
 
     const specifications = [
-      {
-        name: t('ProductDetails.Accordions.sku'),
-        value: product.sku,
-      },
-      {
-        name: t('ProductDetails.Accordions.weight'),
-        value: `${product.weight?.value} ${product.weight?.unit}`,
-      },
-      {
-        name: t('ProductDetails.Accordions.condition'),
-        value: product.condition,
-      },
+      ...(product.sku
+        ? [
+            {
+              name: t('ProductDetails.Accordions.sku'),
+              value: product.sku,
+            },
+          ]
+        : []),
+      ...(product.weight?.value && product.weight.value > 0
+        ? [
+            {
+              name: t('ProductDetails.Accordions.weight'),
+              value: `${product.weight.value} ${product.weight.unit || ''}`.trim(),
+            },
+          ]
+        : []),
+      ...(product.condition
+        ? [
+            {
+              name: t('ProductDetails.Accordions.condition'),
+              value: product.condition,
+            },
+          ]
+        : []),
       ...customFields
         .filter(
           (field) =>
